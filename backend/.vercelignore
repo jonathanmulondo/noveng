@@ -1,0 +1,20 @@
+# Development
+node_modules/
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+.nyc_output/
+
+# Not needed in deployment
+curriculum/
+*.md

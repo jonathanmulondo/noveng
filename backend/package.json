@@ -1,0 +1,31 @@
+{
+  "name": "noveng-backend",
+  "version": "1.0.0",
+  "description": "NovEng Arduino Learning Platform - Backend API",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node src/scripts/seedCurriculum.js",
+    "db:setup": "node src/scripts/setupDatabase.js",
+    "vercel-build": "echo 'No build needed for serverless'"
+  },
+  "keywords": ["arduino", "education", "api", "nodejs"],
+  "author": "NovEng Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "pg": "^8.11.3",
+    "@supabase/supabase-js": "^2.39.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "express-validator": "^7.0.1",
+    "marked": "^11.1.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
