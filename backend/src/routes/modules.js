@@ -10,11 +10,7 @@ router.get('/', async (req, res) => {
 
     let query = supabase
       .from('modules')
-      .select(`
-        *,
-        module_tags(tag),
-        module_prerequisites(prerequisite_module_id)
-      `)
+      .select('*')
       .order('module_number', { ascending: true });
 
     // Apply filters
@@ -56,11 +52,7 @@ router.get('/:slug', async (req, res) => {
 
     const { data, error } = await supabase
       .from('modules')
-      .select(`
-        *,
-        module_tags(tag),
-        quiz_questions(id, question, options, correct_index, explanation)
-      `)
+      .select('*')
       .eq('slug', slug)
       .single();
 
