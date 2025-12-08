@@ -199,7 +199,7 @@ export const MOCK_FEED: FeedItem[] = [
     author: 'NovEng',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     type: 'video',
-    src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765193071144-VID-20251208-WA0011.mp4',
+    src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765227515445-VID-20251208-WA0011-converted.mp4',
     caption: 'Understanding breadboards - your temporary workspace for building circuits without soldering! Learn about power rails and connection rows 🔌⚡ #breadboard #electronics #arduino',
     likes: 0,
     comments: 0,
@@ -210,7 +210,7 @@ export const MOCK_FEED: FeedItem[] = [
     author: 'NovEng',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     type: 'video',
-    src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765193057935-VID-20251208-WA0010.mp4',
+    src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765227485029-VID-20251208-WA0010-converted.mp4',
     caption: 'Quick tour of the Arduino board! Power areas (3.3V, 5V, GND), digital & analog pins, and the microcontroller chip explained 📚⚡ #arduino #tutorial #beginner',
     likes: 0,
     comments: 0,
@@ -221,7 +221,7 @@ export const MOCK_FEED: FeedItem[] = [
     author: 'NovEng',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     type: 'video',
-    src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765193039913-VID-20251208-WA0009.mp4',
+    src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765227458982-VID-20251208-WA0009-converted.mp4',
     caption: 'Digital pins explained! Pins 0-13 control LEDs, buzzers & more. Turn things ON and OFF with your Arduino 💡🔊 #digitalpins #arduino #electronics',
     likes: 0,
     comments: 0,
@@ -232,7 +232,7 @@ export const MOCK_FEED: FeedItem[] = [
     author: 'NovEng',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     type: 'video',
-    src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765193027936-VID-20251208-WA0008.mp4',
+    src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765227433620-VID-20251208-WA0008-converted.mp4',
     caption: 'Analog pins (A0-A5) read smooth, continuous signals from sensors like light, temperature & rotation! Perfect for LDRs and temp sensors 🌡️📊 #analogpins #sensors #arduino',
     likes: 0,
     comments: 0,
@@ -243,11 +243,11 @@ export const MOCK_FEED: FeedItem[] = [
     author: 'NovEng',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     type: 'video',
-    src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765193016490-VID-20251208-WA0007.mp4',
+    src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765227410784-VID-20251208-WA0007-converted.mp4',
     caption: 'Meet the Arduino UNO! A small microcontroller board that lets you control electronics using code. Powered via USB - let\'s get started! 🚀💻 #arduinouno #microcontroller #coding',
     likes: 0,
     comments: 0,
     tags: ['arduinouno', 'microcontroller', 'coding']
   }
-  
+
 ];
