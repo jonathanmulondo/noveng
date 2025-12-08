@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, Module } from '../services/api';
 import { explainCode } from '../services/geminiService';
-import { ChevronLeft, BookOpen, Loader2, AlertCircle, Star, Clock, Users, Bot, Send, Sparkles, CheckCircle2, PlayCircle, Code2, BookMarked, List } from 'lucide-react';
+import { ChevronLeft, BookOpen, Loader2, AlertCircle, Star, Clock, Users, Bot, Send, Sparkles, CheckCircle2, PlayCircle, Code2, BookMarked, List, X } from 'lucide-react';
 
 interface LessonSection {
   id: string;
@@ -29,6 +29,7 @@ export const ModuleDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'theory' | 'code'>('overview');
   const [activeSection, setActiveSection] = useState<string>('');
+  const [isNovieChatOpen, setIsNovieChatOpen] = useState(false);
 
   // Chatbot state
   const [messages, setMessages] = useState<Message[]>([
@@ -50,6 +51,17 @@ export const ModuleDetail: React.FC = () => {
   useEffect(() => {
     scrollChatToBottom();
   }, [messages]);
+
+  // ESC key to close chat
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isNovieChatOpen) {
+        setIsNovieChatOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isNovieChatOpen]);
 
   // Parse lesson content into theory and code sections
   const parseSections = (content: string): LessonSection[] => {
@@ -424,72 +436,113 @@ export const ModuleDetail: React.FC = () => {
               </div>
             )}
 
-            {/* Novie Chatbot */}
-            <div className="bg-white rounded-3xl border-2 border-purple-200 overflow-hidden shadow-xl sticky top-24">
-              <div className="bg-gradient-to-r from-purple-600 to-pink-500 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
-                    <Bot size={20} className="text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-white font-display font-bold">Ask Novie</h3>
-                    <p className="text-white/80 text-xs">Your AI assistant</p>
+            {/* Novie Floating Button */}
+            <button
+              onClick={() => setIsNovieChatOpen(true)}
+              className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-500 rounded-full shadow-2xl hover:shadow-purple-300 hover:scale-110 transition-all duration-300 flex items-center justify-center z-40"
+              aria-label="Open Novie AI Assistant"
+            >
+              <Bot size={28} className="text-white" />
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                <Sparkles size={12} className="text-white" />
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Novie Chat Popup Modal */}
+        {isNovieChatOpen && (
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity"
+              onClick={() => setIsNovieChatOpen(false)}
+            />
+
+            {/* Chat Modal */}
+            <div className="fixed bottom-6 right-6 w-full max-w-md z-50 animate-in slide-in-from-bottom-4">
+              <div className="bg-white rounded-3xl border-2 border-purple-200 overflow-hidden shadow-2xl">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-purple-600 to-pink-500 p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+                        <Bot size={20} className="text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-white font-display font-bold">Ask Novie</h3>
+                        <p className="text-white/80 text-xs">Your AI assistant</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setIsNovieChatOpen(false)}
+                      className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                      aria-label="Close chat"
+                    >
+                      <X size={18} className="text-white" />
+                    </button>
                   </div>
                 </div>
-              </div>
 
-              <div className="h-80 overflow-y-auto p-4 space-y-3">
-                {messages.map((msg) => (
-                  <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    {msg.role === 'novie' && (
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center flex-shrink-0">
-                        <Bot size={14} className="text-white" />
+                {/* Messages */}
+                <div className="h-96 overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-purple-50/30 to-white">
+                  {messages.map((msg) => (
+                    <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      {msg.role === 'novie' && (
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center flex-shrink-0">
+                          <Bot size={14} className="text-white" />
+                        </div>
+                      )}
+                      <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${
+                        msg.role === 'user'
+                          ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white'
+                          : 'bg-white text-neutral-800 border-2 border-purple-100 shadow-sm'
+                      }`}>
+                        <p className="whitespace-pre-wrap">{msg.content}</p>
                       </div>
-                    )}
-                    <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${
-                      msg.role === 'user'
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white'
-                        : 'bg-purple-50 text-neutral-800 border border-purple-200'
-                    }`}>
-                      <p className="whitespace-pre-wrap">{msg.content}</p>
                     </div>
-                  </div>
-                ))}
-                {isLoadingChat && (
-                  <div className="flex gap-2">
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center">
-                      <Sparkles size={14} className="text-white animate-pulse" />
+                  ))}
+                  {isLoadingChat && (
+                    <div className="flex gap-2">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center">
+                        <Sparkles size={14} className="text-white animate-pulse" />
+                      </div>
+                      <div className="bg-white p-3 rounded-2xl border-2 border-purple-100 shadow-sm">
+                        <Loader2 size={16} className="text-purple-600 animate-spin" />
+                      </div>
                     </div>
-                    <div className="bg-purple-50 p-3 rounded-2xl border border-purple-200">
-                      <Loader2 size={16} className="text-purple-600 animate-spin" />
-                    </div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
 
-              <div className="p-3 border-t-2 border-purple-200">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                    placeholder="Ask anything..."
-                    className="flex-1 px-4 py-2 bg-purple-50 border border-purple-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-                  />
-                  <button
-                    onClick={handleSendMessage}
-                    disabled={!chatInput.trim() || isLoadingChat}
-                    className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-500 rounded-full flex items-center justify-center text-white hover:shadow-lg transition-all disabled:opacity-50"
-                  >
-                    <Send size={16} />
-                  </button>
+                {/* Input */}
+                <div className="p-4 border-t-2 border-purple-200 bg-white">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                      placeholder="Ask anything about this lesson..."
+                      className="flex-1 px-4 py-3 bg-purple-50 border-2 border-purple-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleSendMessage}
+                      disabled={!chatInput.trim() || isLoadingChat}
+                      className="w-12 h-12 bg-gradient-to-r from-purple-600 to-pink-500 rounded-full flex items-center justify-center text-white hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100"
+                    >
+                      <Send size={18} />
+                    </button>
+                  </div>
+                  <p className="text-xs text-neutral-500 mt-2 text-center">
+                    Press Enter to send • ESC to close
+                  </p>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
