@@ -209,50 +209,49 @@ export const Simulator: React.FC = () => {
     <div className="h-full flex flex-col md:flex-row overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-white">
 
       {/* Component Palette - Purple Theme */}
-      <div className="w-full md:w-64 bg-white border-r border-purple-100 p-6 flex flex-col gap-6 shadow-xl z-10">
+      <div className="w-full md:w-64 bg-white border-r border-purple-100 p-4 md:p-6 flex flex-col gap-4 md:gap-6 shadow-xl z-10 pt-16 md:pt-6">
         <div>
-          <h2 className="font-display text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500 mb-2">
+          <h2 className="font-display text-lg md:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500 mb-1 md:mb-2">
             Components
           </h2>
-          <p className="text-sm text-neutral-500">Drag onto breadboard</p>
+          <p className="text-xs md:text-sm text-neutral-500">Click to add</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-1 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-1 gap-2 md:gap-3">
           {Object.keys(COMPONENT_SPECS).map((key) => {
             const type = key as ComponentType;
             return (
               <button
                 key={type}
                 onClick={() => addComponent(type)}
-                className="group relative p-4 border-2 border-purple-100 rounded-2xl hover:border-purple-300 hover:bg-gradient-to-br hover:from-purple-50 hover:to-pink-50 transition-all text-left flex flex-col items-center gap-2"
+                className="group relative p-3 md:p-4 border-2 border-purple-100 rounded-xl md:rounded-2xl hover:border-purple-300 hover:bg-gradient-to-br hover:from-purple-50 hover:to-pink-50 transition-all text-left flex flex-col items-center gap-1 md:gap-2"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-pink-500/0 group-hover:from-purple-500/5 group-hover:to-pink-500/5 rounded-2xl transition-all" />
-                <div className="relative font-semibold text-sm text-neutral-800">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-pink-500/0 group-hover:from-purple-500/5 group-hover:to-pink-500/5 rounded-xl md:rounded-2xl transition-all" />
+                <div className="relative font-semibold text-xs md:text-sm text-neutral-800 text-center">
                   {COMPONENT_SPECS[type].label}
                 </div>
-                <div className="relative text-xs text-neutral-500">Click to add</div>
               </button>
             );
           })}
         </div>
 
-        <div className="mt-auto space-y-3 border-t border-purple-100 pt-6">
+        <div className="mt-auto space-y-2 md:space-y-3 border-t border-purple-100 pt-4 md:pt-6">
           <button
             onClick={runSimulation}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-200 transition-all"
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white py-2.5 md:py-3 rounded-xl md:rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-200 transition-all text-sm md:text-base"
           >
-            <Play size={18} fill="white" /> Test Circuit
+            <Play size={16} fill="white" className="md:w-[18px] md:h-[18px]" /> Test Circuit
           </button>
           <button
             onClick={clearBoard}
-            className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 py-3 rounded-2xl font-medium flex items-center justify-center gap-2 transition-all"
+            className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 py-2.5 md:py-3 rounded-xl md:rounded-2xl font-medium flex items-center justify-center gap-2 transition-all text-sm md:text-base"
           >
-            <Trash2 size={18} /> Clear Board
+            <Trash2 size={16} className="md:w-[18px] md:h-[18px]" /> Clear Board
           </button>
         </div>
 
         {validationMsg && (
-          <div className={`p-4 rounded-2xl text-sm font-medium ${
+          <div className={`p-3 md:p-4 rounded-xl md:rounded-2xl text-xs md:text-sm font-medium ${
             simState === 'running'
               ? 'bg-green-50 text-green-800 border border-green-200'
               : 'bg-orange-50 text-orange-800 border border-orange-200'
