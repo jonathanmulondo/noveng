@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Zap, BookOpen, Users, Home, Sparkles, Bot } from 'lucide-react';
+import { Zap, BookOpen, Users, Home, Sparkles, Bot, Menu, X } from 'lucide-react';
 import { MOCK_USER } from '../services/mockData';
 import { NovieFloatingButton } from './NovieFloatingButton';
 
 export const Layout: React.FC = () => {
   const location = useLocation();
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const NAV_ITEMS = [
     { label: 'Dashboard', icon: <Home size={20} />, path: '/' },
@@ -16,10 +17,27 @@ export const Layout: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-white md:flex-row overflow-hidden font-sans antialiased">
+    <div className="flex flex-row h-screen bg-white overflow-hidden font-sans antialiased">
 
-      {/* Sidebar for Desktop - Purple/Pink Theme */}
-      <aside className="hidden md:flex flex-col w-72 bg-gradient-to-b from-neutral-900 via-purple-950 to-neutral-900 text-neutral-300 h-full shadow-2xl z-20 border-r border-purple-900/20">
+      {/* Mobile Hamburger Menu Button */}
+      <button
+        onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+        className="md:hidden fixed top-4 left-4 z-50 p-3 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl shadow-lg"
+      >
+        {isMobileSidebarOpen ? (
+          <X size={24} className="text-white" />
+        ) : (
+          <Menu size={24} className="text-white" />
+        )}
+      </button>
+
+      {/* Sidebar - Shows on Desktop, Toggleable on Mobile */}
+      <aside className={`
+        fixed md:relative
+        ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        transition-transform duration-300 ease-in-out
+        flex flex-col w-72 bg-gradient-to-b from-neutral-900 via-purple-950 to-neutral-900 text-neutral-300 h-full shadow-2xl z-40 border-r border-purple-900/20
+      `}>
 
         {/* Logo */}
         <div className="p-8">
@@ -49,6 +67,7 @@ export const Layout: React.FC = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                onClick={() => setIsMobileSidebarOpen(false)}
                 className={`group relative flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${
                   isActive
                     ? 'bg-gradient-to-br from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/30'
@@ -107,49 +126,21 @@ export const Layout: React.FC = () => {
         </div>
       </aside>
 
+      {/* Mobile Sidebar Backdrop */}
+      {isMobileSidebarOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto relative pb-20 md:pb-0 bg-gradient-to-br from-purple-50/30 via-pink-50/20 to-white">
+      <main className="flex-1 overflow-y-auto relative bg-gradient-to-br from-purple-50/30 via-pink-50/20 to-white">
         <Outlet />
 
         {/* Floating Novie AI Button - Appears on all pages except /novie and /feed */}
         {location.pathname !== '/novie' && location.pathname !== '/feed' && <NovieFloatingButton />}
       </main>
-
-      {/* Mobile Bottom Nav - Purple/Pink Theme */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-neutral-900 border-t border-purple-900/20 px-6 py-4 flex justify-between items-center z-50 backdrop-blur-lg bg-opacity-95">
-        {NAV_ITEMS.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className="relative flex flex-col items-center gap-1 rounded-xl transition-all"
-            >
-              {/* Active background glow */}
-              {isActive && (
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl opacity-20 blur-sm" />
-              )}
-
-              <div className={`relative p-3 rounded-xl transition-all ${
-                isActive
-                  ? 'bg-gradient-to-br from-purple-600 to-pink-600 shadow-lg shadow-purple-500/30'
-                  : ''
-              }`}>
-                {React.cloneElement(item.icon as React.ReactElement<{ className: string }>, {
-                  className: isActive ? 'text-white' : 'text-neutral-500'
-                })}
-              </div>
-            </NavLink>
-          );
-        })}
-
-        {/* Profile in mobile nav */}
-        <NavLink to="/profile" className="flex flex-col items-center gap-1 relative">
-          <div className="w-10 h-10 rounded-xl overflow-hidden border-2 border-purple-500/30">
-            <img src={MOCK_USER.avatar} alt="Me" className="w-full h-full object-cover" />
-          </div>
-        </NavLink>
-      </nav>
     </div>
   );
 };
