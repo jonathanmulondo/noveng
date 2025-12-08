@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 
-const apiKey = process.env.API_KEY || ''; 
-// Note: In a real app, ensure API_KEY is set. For this demo, we handle missing keys gracefully in the UI.
+// Use Vite's environment variable format
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 let ai: GoogleGenAI | null = null;
 
@@ -9,29 +9,69 @@ if (apiKey) {
   ai = new GoogleGenAI({ apiKey });
 }
 
-export const explainCode = async (code: string): Promise<string> => {
+// System prompt for Novie AI
+const NOVIE_SYSTEM_PROMPT = `You are Novie, a friendly and knowledgeable Arduino learning assistant for NovEng, an educational platform.
+
+Your personality:
+- Enthusiastic and encouraging
+- Patient and beginner-friendly
+- Use emojis occasionally (but not excessively)
+- Keep answers concise but informative
+- Focus on hands-on, practical explanations
+
+Your expertise:
+- Arduino Uno programming (C++)
+- Basic electronics and circuits
+- Common sensors (ultrasonic, temperature, light)
+- LEDs, buttons, servos, motors
+- Project guidance and troubleshooting
+
+Guidelines:
+- Always provide code examples when relevant
+- Explain the "why" behind concepts
+- Suggest next learning steps
+- If user asks something outside Arduino/electronics, politely redirect to Arduino topics
+- Keep responses under 200 words unless explaining code
+
+Format code blocks with triple backticks and cpp language tag.`;
+
+export const chatWithNovie = async (
+  userMessage: string,
+  conversationHistory: Array<{ role: 'user' | 'model'; parts: string }>
+): Promise<string> => {
   if (!ai) {
-    return "API Key missing. Please configure the environment variable to use AI features.";
+    return "⚠️ **API Key Missing**\n\nTo enable Novie AI, add your Gemini API key:\n\n1. Get a free key at: https://aistudio.google.com/app/apikey\n2. Create a `.env` file in the project root\n3. Add: `VITE_GEMINI_API_KEY=your_key_here`\n4. Restart the dev server\n\nUntil then, I can answer basic Arduino questions using my built-in knowledge!";
   }
 
   try {
-    const model = "gemini-2.5-flash";
-    const prompt = `You are an expert Arduino tutor for beginners. Explain the following C++ code simply, line by line, focusing on the logic:
-    
-    \`\`\`cpp
-    ${code}
-    \`\`\`
-    
-    Keep it encouraging and short (max 150 words).`;
+    const model = "gemini-2.0-flash-exp";
+
+    // Build conversation context
+    const contents = [
+      { role: 'user', parts: NOVIE_SYSTEM_PROMPT },
+      { role: 'model', parts: "Got it! I'm Novie, ready to help with Arduino and electronics learning. I'll keep my answers friendly, practical, and concise! 🚀" },
+      ...conversationHistory,
+      { role: 'user', parts: userMessage }
+    ];
 
     const response = await ai.models.generateContent({
       model: model,
-      contents: prompt,
+      contents: contents.map(msg => `${msg.role}: ${msg.parts}`).join('\n'),
     });
 
-    return response.text || "Could not generate explanation.";
-  } catch (error) {
+    return response.text || "I apologize, I couldn't generate a response. Could you try rephrasing your question?";
+  } catch (error: any) {
     console.error("Gemini API Error:", error);
-    return "Sorry, I couldn't explain this code right now. Please try again later.";
+
+    if (error?.message?.includes('API_KEY')) {
+      return "⚠️ **Invalid API Key**\n\nYour Gemini API key appears to be invalid. Please check that it's correct in your `.env` file.";
+    }
+
+    return "Sorry, I'm having trouble connecting right now. Please try again in a moment! 🔧";
   }
+};
+
+// Legacy function for backward compatibility
+export const explainCode = async (code: string): Promise<string> => {
+  return chatWithNovie(`Explain this Arduino code:\n\n\`\`\`cpp\n${code}\n\`\`\``, []);
 };

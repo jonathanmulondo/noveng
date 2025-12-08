@@ -1,12 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, Send, Sparkles, Lightbulb, Code, Cpu, Zap } from 'lucide-react';
-import { explainCode } from '../services/geminiService';
+import { chatWithNovie } from '../services/geminiService';
 
 interface Message {
   id: string;
   role: 'user' | 'novie';
   content: string;
   timestamp: Date;
+}
+
+interface ConversationContext {
+  role: 'user' | 'model';
+  parts: string;
 }
 
 const QUICK_QUESTIONS = [
@@ -29,6 +34,7 @@ export const Novie: React.FC = () => {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [conversationHistory, setConversationHistory] = useState<ConversationContext[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -54,17 +60,16 @@ export const Novie: React.FC = () => {
     setInput('');
     setIsLoading(true);
 
-    // Simulate AI response (replace with actual Gemini/Claude API call)
-    setTimeout(async () => {
-      let aiResponse = '';
+    try {
+      // Call Gemini AI with conversation history
+      const aiResponse = await chatWithNovie(messageText, conversationHistory);
 
-      // Check if it's a code-related question
-      if (messageText.toLowerCase().includes('code') || messageText.toLowerCase().includes('sketch')) {
-        aiResponse = await explainCode(messageText);
-      } else {
-        // Generic Arduino help (you can expand this with actual AI)
-        aiResponse = getArduinoHelp(messageText);
-      }
+      // Update conversation history
+      setConversationHistory(prev => [
+        ...prev,
+        { role: 'user', parts: messageText },
+        { role: 'model', parts: aiResponse }
+      ]);
 
       const novieMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -73,39 +78,18 @@ export const Novie: React.FC = () => {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, novieMessage]);
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'novie',
+        content: "Sorry, I'm having trouble connecting right now. Please try again! 🔧\n\nIn the meantime, try asking one of the quick questions below.",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
-  };
-
-  const getArduinoHelp = (question: string): string => {
-    const q = question.toLowerCase();
-
-    if (q.includes('blink') || q.includes('led')) {
-      return "To blink an LED with Arduino:\n\n1. **Wire the LED**: Connect the long leg (anode) to pin 13 through a 220Ω resistor, and short leg (cathode) to GND.\n\n2. **Write the code**:\n```cpp\nvoid setup() {\n  pinMode(13, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(13, HIGH);\n  delay(1000);\n  digitalWrite(13, LOW);\n  delay(1000);\n}\n```\n\nThis turns the LED on for 1 second, then off for 1 second, repeatedly!";
     }
-
-    if (q.includes('digitalwrite') || q.includes('analogwrite')) {
-      return "**digitalWrite vs analogWrite:**\n\n• **digitalWrite(pin, HIGH/LOW)**: \n  - Sets a pin completely ON (5V) or OFF (0V)\n  - Use for: LEDs on/off, relays, simple digital signals\n\n• **analogWrite(pin, 0-255)**:\n  - Uses PWM to simulate analog output\n  - Value 0 = 0V, 255 = 5V, 127 = ~2.5V\n  - Use for: LED dimming, motor speed control\n  - Only works on PWM pins (marked with ~)\n\nExample: `analogWrite(9, 128);` sets pin 9 to half brightness!";
-    }
-
-    if (q.includes('button')) {
-      return "**Using a Button with Arduino:**\n\n1. Wire the button between pin 2 and GND\n2. Enable internal pull-up resistor in code:\n\n```cpp\nvoid setup() {\n  pinMode(2, INPUT_PULLUP); // Pull-up resistor\n  pinMode(13, OUTPUT);\n}\n\nvoid loop() {\n  if (digitalRead(2) == LOW) {  // Button pressed\n    digitalWrite(13, HIGH);      // Turn LED on\n  } else {\n    digitalWrite(13, LOW);       // Turn LED off\n  }\n}\n```\n\nWith INPUT_PULLUP, the button reads HIGH when not pressed, LOW when pressed!";
-    }
-
-    if (q.includes('pull-up') || q.includes('pullup')) {
-      return "**Pull-up Resistors Explained:**\n\nImagine a button floating between 0V and 5V - it's unstable! A pull-up resistor \"pulls\" the pin HIGH (5V) by default.\n\n**Why use them?**\n• Prevents floating inputs (unreliable readings)\n• Arduino has built-in pull-ups (20kΩ)\n• When button is pressed → connects to GND → reads LOW\n• When released → pulled HIGH by resistor → reads HIGH\n\n**Enable it:** `pinMode(pin, INPUT_PULLUP);`\n\nNo external resistor needed!";
-    }
-
-    if (q.includes('servo')) {
-      return "**Servo Motor Control:**\n\n1. **Wiring:**\n   - Orange/Yellow wire → Arduino pin 9\n   - Red wire → 5V\n   - Brown/Black wire → GND\n\n2. **Code:**\n```cpp\n#include <Servo.h>\nServo myservo;\n\nvoid setup() {\n  myservo.attach(9);\n}\n\nvoid loop() {\n  myservo.write(0);    // 0 degrees\n  delay(1000);\n  myservo.write(90);   // 90 degrees\n  delay(1000);\n  myservo.write(180);  // 180 degrees\n  delay(1000);\n}\n```\n\nServo moves to specified angle (0-180°)!";
-    }
-
-    if (q.includes('pwm')) {
-      return "**PWM Pins on Arduino Uno:**\n\n✅ PWM-capable pins: **3, 5, 6, 9, 10, 11**\n(Look for the ~ symbol on the board)\n\n❌ Non-PWM pins: 0, 1, 2, 4, 7, 8, 12, 13, A0-A5\n\n**Why it matters:**\nOnly PWM pins can use `analogWrite()` for:\n• LED dimming\n• Motor speed control\n• Generating analog-like signals\n\nExample: Pin 9 supports PWM ✅\nPin 7 does NOT ❌";
-    }
-
-    // Default response
-    return "That's a great Arduino question! Here are some helpful tips:\n\n• Check your wiring connections\n• Verify you're using the correct pin numbers\n• Make sure your power supply is adequate\n• Use Serial.println() to debug\n\nCan you provide more details about what you're trying to build? I'm here to help!";
   };
 
   return (
