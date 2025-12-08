@@ -53,7 +53,7 @@ export const ModuleDetail: React.FC = () => {
     scrollChatToBottom();
   }, [messages]);
 
-  // Parse lesson content into segments
+  // Parse and format lesson content into segments
   const parseSegments = (content: string): LessonSegment[] => {
     const segments: LessonSegment[] = [];
     const lines = content.split('\n');
@@ -97,6 +97,100 @@ export const ModuleDetail: React.FC = () => {
       content: content,
       order: 0
     }];
+  };
+
+  // Format content by removing markdown syntax and styling
+  const formatContent = (text: string): JSX.Element[] => {
+    const lines = text.split('\n');
+    const elements: JSX.Element[] = [];
+    let codeBlock = '';
+    let inCodeBlock = false;
+    let listItems: string[] = [];
+    let key = 0;
+
+    const flushList = () => {
+      if (listItems.length > 0) {
+        elements.push(
+          <ul key={`list-${key++}`} className="space-y-2 mb-6">
+            {listItems.map((item, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <div className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mt-2 flex-shrink-0" />
+                <span className="text-neutral-700 leading-relaxed">{item}</span>
+              </li>
+            ))}
+          </ul>
+        );
+        listItems = [];
+      }
+    };
+
+    lines.forEach((line, index) => {
+      // Code blocks
+      if (line.trim().startsWith('```')) {
+        if (inCodeBlock) {
+          elements.push(
+            <div key={`code-${key++}`} className="mb-6 rounded-2xl overflow-hidden border-2 border-purple-200">
+              <div className="bg-gradient-to-r from-purple-600 to-pink-500 px-4 py-2 flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-white/30" />
+                  <div className="w-3 h-3 rounded-full bg-white/30" />
+                  <div className="w-3 h-3 rounded-full bg-white/30" />
+                </div>
+                <span className="text-white/80 text-xs font-mono ml-2">Code</span>
+              </div>
+              <pre className="bg-neutral-900 text-green-400 p-6 overflow-x-auto">
+                <code className="font-mono text-sm">{codeBlock}</code>
+              </pre>
+            </div>
+          );
+          codeBlock = '';
+          inCodeBlock = false;
+        } else {
+          flushList();
+          inCodeBlock = true;
+        }
+        return;
+      }
+
+      if (inCodeBlock) {
+        codeBlock += line + '\n';
+        return;
+      }
+
+      // Remove ### headers but keep the text
+      if (line.match(/^###\s+(.+)$/)) {
+        flushList();
+        const text = line.replace(/^###\s+/, '');
+        elements.push(
+          <h4 key={`h4-${key++}`} className="text-lg font-bold text-purple-700 mb-3 mt-6">
+            {text}
+          </h4>
+        );
+        return;
+      }
+
+      // Bullet points
+      if (line.match(/^[-*]\s+(.+)$/)) {
+        const text = line.replace(/^[-*]\s+/, '').replace(/\*\*(.+?)\*\*/g, '$1');
+        listItems.push(text);
+        return;
+      }
+
+      // Regular paragraphs
+      if (line.trim()) {
+        flushList();
+        // Remove bold markdown
+        const cleanText = line.replace(/\*\*(.+?)\*\*/g, '$1');
+        elements.push(
+          <p key={`p-${key++}`} className="text-neutral-700 leading-relaxed mb-4">
+            {cleanText}
+          </p>
+        );
+      }
+    });
+
+    flushList();
+    return elements;
   };
 
   // Fetch module data from backend
@@ -303,13 +397,11 @@ export const ModuleDetail: React.FC = () => {
               <div className="p-8">
                 {activeTab === 'overview' ? (
                   <div>
-                    <p className="text-lg text-neutral-700 mb-8 leading-relaxed">
-                      {module.description}
-                    </p>
-                    <div className="prose prose-lg prose-neutral max-w-none">
-                      <pre className="whitespace-pre-wrap font-sans text-neutral-700 leading-relaxed bg-gradient-to-br from-purple-50 to-pink-50 p-8 rounded-2xl border-2 border-purple-200">
-                        {overviewContent}
-                      </pre>
+                    {/* Overview Content */}
+                    <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50/30 p-8 rounded-2xl border-2 border-purple-200">
+                      <div className="prose prose-lg max-w-none">
+                        {formatContent(overviewContent)}
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -334,10 +426,10 @@ export const ModuleDetail: React.FC = () => {
                       </div>
 
                       {/* Segment Content */}
-                      <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-8 rounded-2xl border-2 border-purple-200 mb-6">
-                        <pre className="whitespace-pre-wrap font-sans text-neutral-700 leading-relaxed">
-                          {lessonSegments[activeSegment]?.content}
-                        </pre>
+                      <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50/30 p-8 rounded-2xl border-2 border-purple-200 mb-6">
+                        <div className="prose prose-lg max-w-none">
+                          {formatContent(lessonSegments[activeSegment]?.content || '')}
+                        </div>
                       </div>
 
                       {/* Navigation */}
