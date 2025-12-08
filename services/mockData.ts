@@ -194,6 +194,17 @@ void loop() {
 
 // Arduino-focused community feed
 export const MOCK_FEED: FeedItem[] = [
+   {
+    id: 'post_1765189482326',
+    author: 'Jonathan Mulondo',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+    type: 'video',
+    src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765189479995-arduino1.mp4',
+    caption: 'My first Arduino project! Building and testing circuits 🔌⚡ #arduino #electronics #maker',
+    likes: 0,
+    comments: 0,
+    tags: ['arduino', 'electronics', 'maker']
+  },
   {
     id: 'post_1',
     author: 'ArduinoMaster',
