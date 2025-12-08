@@ -1,15 +1,15 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Anthropic from "@anthropic-ai/sdk";
 
 // Use Vite's environment variable format
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
 
-console.log('🔑 Gemini API Key loaded:', apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT FOUND');
+console.log('🔑 Anthropic API Key loaded:', apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT FOUND');
 
-let ai: GoogleGenerativeAI | null = null;
+let anthropic: Anthropic | null = null;
 
 if (apiKey) {
-  ai = new GoogleGenerativeAI(apiKey);
-  console.log('✅ GoogleGenerativeAI initialized');
+  anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+  console.log('✅ Anthropic Claude initialized');
 } else {
   console.warn('⚠️ No API key found - Novie will not work');
 }
@@ -53,13 +53,11 @@ export const chatWithNovie = async (
   context?: ChatContext,
   imageBase64?: string
 ): Promise<string> => {
-  if (!ai) {
-    return "⚠️ **API Key Missing**\n\nTo enable Novie AI, add your Gemini API key:\n\n1. Get a free key at: https://aistudio.google.com/app/apikey\n2. Create a `.env` file in the project root\n3. Add: `VITE_GEMINI_API_KEY=your_key_here`\n4. Restart the dev server\n\nUntil then, I can answer basic Arduino questions using my built-in knowledge!";
+  if (!anthropic) {
+    return "⚠️ **API Key Missing**\n\nTo enable Novie AI, add your Anthropic API key:\n\n1. Get a free key at: https://console.anthropic.com/\n2. Update your `.env` file\n3. Add: `VITE_ANTHROPIC_API_KEY=your_key_here`\n4. Restart the dev server\n\nUntil then, I can answer basic Arduino questions using my built-in knowledge!";
   }
 
   try {
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
-
     // Build context-aware message
     let contextualMessage = userMessage;
     if (context) {
@@ -74,44 +72,58 @@ export const chatWithNovie = async (
       }
     }
 
-    // Build conversation history in the correct format
-    const history = [
-      { role: 'user', parts: [{ text: NOVIE_SYSTEM_PROMPT }] },
-      { role: 'model', parts: [{ text: "Got it! I'm Novie, ready to help with Arduino and electronics learning. I'll keep my answers friendly, practical, and concise! 🚀" }] },
-      ...conversationHistory.map(msg => ({
-        role: msg.role,
-        parts: [{ text: msg.parts }]
-      }))
-    ];
+    // Build conversation history for Claude
+    const messages: Anthropic.MessageParam[] = conversationHistory.map(msg => ({
+      role: msg.role === 'model' ? 'assistant' : 'user',
+      content: msg.parts
+    }));
 
-    // If image is provided, add it to the prompt
+    // Add current message
     if (imageBase64) {
-      const chat = model.startChat({ history });
-      const result = await chat.sendMessage([
-        { text: contextualMessage },
-        {
-          inlineData: {
-            mimeType: 'image/jpeg',
-            data: imageBase64
+      messages.push({
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: 'image/jpeg',
+              data: imageBase64
+            }
+          },
+          {
+            type: 'text',
+            text: contextualMessage
           }
-        }
-      ]);
-      return result.response.text() || "I apologize, I couldn't analyze the image. Could you try again?";
+        ]
+      });
     } else {
-      const chat = model.startChat({ history });
-      const result = await chat.sendMessage(contextualMessage);
-      return result.response.text() || "I apologize, I couldn't generate a response. Could you try rephrasing your question?";
+      messages.push({
+        role: 'user',
+        content: contextualMessage
+      });
     }
+
+    const response = await anthropic.messages.create({
+      model: 'claude-3-5-haiku-20241022',
+      max_tokens: 1024,
+      system: NOVIE_SYSTEM_PROMPT,
+      messages: messages
+    });
+
+    const textContent = response.content.find(block => block.type === 'text');
+    return textContent && textContent.type === 'text' ? textContent.text : "I apologize, I couldn't generate a response. Could you try rephrasing your question?";
+
   } catch (error: any) {
-    console.error("Gemini API Error:", error);
+    console.error("Claude API Error:", error);
     console.error("Error details:", error?.message, error?.status, error?.statusText);
 
     if (error?.message?.includes('API_KEY') || error?.message?.includes('API key')) {
-      return "⚠️ **Invalid API Key**\n\nYour Gemini API key appears to be invalid. Please check that it's correct in your `.env` file.";
+      return "⚠️ **Invalid API Key**\n\nYour Anthropic API key appears to be invalid. Please check that it's correct in your `.env` file.";
     }
 
     if (error?.status === 400) {
-      return `⚠️ **API Error**\n\n${error?.message || 'Bad request. The model name might be incorrect or the API format has changed.'}`;
+      return `⚠️ **API Error**\n\n${error?.message || 'Bad request. Please try again.'}`;
     }
 
     return `Sorry, I'm having trouble connecting right now. Please try again in a moment! 🔧\n\nError: ${error?.message || 'Unknown error'}`;
