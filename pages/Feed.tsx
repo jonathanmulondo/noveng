@@ -137,16 +137,6 @@ const FeedPost: React.FC<{ post: FeedItem; isActive: boolean }> = ({ post, isAct
       {/* Right Sidebar Actions - Purple/Pink Theme */}
       <div className="absolute right-4 bottom-28 flex flex-col items-center gap-6 z-20">
 
-        {/* Profile Avatar & Follow */}
-        <div className="relative mb-2 group cursor-pointer transition-transform active:scale-95">
-           <div className="w-14 h-14 rounded-full border-2 border-white/90 overflow-hidden shadow-xl shadow-purple-500/20">
-             <img src={post.avatar} className="w-full h-full object-cover" alt={post.author} />
-           </div>
-           <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full p-1 text-white shadow-lg shadow-purple-500/30 transform scale-90 group-hover:scale-110 transition-transform">
-             <Plus size={16} strokeWidth={4} />
-           </div>
-        </div>
-
         {/* Like Button - Purple/Pink */}
         <div className="flex flex-col items-center gap-1.5 cursor-pointer group" onClick={toggleLike}>
            <div className="p-3 rounded-full bg-gradient-to-br from-purple-500/10 to-pink-500/10 backdrop-blur-sm transition-all active:scale-75 group-hover:from-purple-500/20 group-hover:to-pink-500/20 border border-white/10">
@@ -201,72 +191,46 @@ const FeedPost: React.FC<{ post: FeedItem; isActive: boolean }> = ({ post, isAct
         </div>
       </div>
 
-      {/* Bottom Left Content Info */}
-      <div className="absolute bottom-32 left-0 right-24 p-5 z-20 text-white md:bottom-20">
-         {/* Author Name */}
-         <div className="flex items-center gap-2.5 mb-3">
-            <h3 className="font-bold text-lg shadow-black drop-shadow-2xl cursor-pointer hover:underline tracking-tight">
+      {/* Bottom Left Content Info - Compact Version */}
+      <div className="absolute bottom-20 left-0 right-20 px-4 py-3 z-20 text-white">
+         {/* Author Name - Compact */}
+         <div className="flex items-center gap-1.5 mb-1.5">
+            <h3 className="font-semibold text-sm shadow-black drop-shadow-lg cursor-pointer hover:underline tracking-tight">
                @{post.author}
             </h3>
             {/* Verified badge - Purple */}
-            <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-full p-1">
-                <Sparkles size={12} className="text-white fill-white" />
+            <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-full p-0.5">
+                <Sparkles size={10} className="text-white fill-white" />
             </div>
          </div>
 
-         {/* Caption */}
-         <div className="mb-4 text-sm md:text-base opacity-95 leading-snug drop-shadow-2xl font-normal max-w-[90%]">
-           {showFullCaption || post.caption.length < 100 ? (
+         {/* Caption - Compact */}
+         <div className="mb-2 text-xs opacity-90 leading-tight drop-shadow-lg font-normal max-w-[85%]">
+           {showFullCaption || post.caption.length < 80 ? (
              <span>
                {post.caption}
-               {post.caption.length >= 100 && (
-                   <button onClick={(e) => { e.stopPropagation(); setShowFullCaption(false); }} className="font-semibold ml-2 text-white/80 hover:text-white text-xs">less</button>
+               {post.caption.length >= 80 && (
+                   <button onClick={(e) => { e.stopPropagation(); setShowFullCaption(false); }} className="font-semibold ml-1 text-white/70 hover:text-white text-[10px]">less</button>
                )}
              </span>
            ) : (
              <span>
-               {post.caption.substring(0, 100)}...
-               <button onClick={(e) => { e.stopPropagation(); setShowFullCaption(true); }} className="font-semibold ml-1 text-white/80 hover:text-white">more</button>
+               {post.caption.substring(0, 80)}...
+               <button onClick={(e) => { e.stopPropagation(); setShowFullCaption(true); }} className="font-semibold ml-1 text-white/70 hover:text-white text-[10px]">more</button>
              </span>
            )}
          </div>
 
-         {/* Tags - Purple theme */}
+         {/* Tags - Compact Purple theme */}
          {post.tags && post.tags.length > 0 && (
-           <div className="flex flex-wrap gap-2 mb-4">
-             {post.tags.map(tag => (
-               <span key={tag} className="text-xs font-bold text-white border border-purple-300/30 bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-md px-3 py-1.5 rounded-full hover:from-purple-500/30 hover:to-pink-500/30 transition-all cursor-pointer">
+           <div className="flex flex-wrap gap-1.5">
+             {post.tags.slice(0, 3).map(tag => (
+               <span key={tag} className="text-[10px] font-semibold text-white/90 border border-purple-300/20 bg-gradient-to-br from-purple-500/15 to-pink-500/15 backdrop-blur-sm px-2 py-0.5 rounded-full hover:from-purple-500/25 hover:to-pink-500/25 transition-all cursor-pointer">
                  #{tag}
                </span>
              ))}
            </div>
          )}
-
-         {/* Music Marquee - Purple theme */}
-         <div className="flex items-center gap-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-md px-4 py-2.5 rounded-full w-fit max-w-[85%] border border-purple-300/20 hover:from-purple-500/30 hover:to-pink-500/30 transition-all cursor-pointer">
-            <Music size={16} className="shrink-0 animate-pulse text-purple-300" />
-            <div className="text-xs font-medium whitespace-nowrap overflow-hidden w-40 mask-gradient relative">
-               <span className="animate-marquee inline-block">
-                  Engineering Vibes - {post.author} • Building the future • NovEng Sounds •
-               </span>
-            </div>
-         </div>
-      </div>
-
-      {/* Spinning Vinyl - Purple theme */}
-      <div className="absolute bottom-8 right-5 z-20">
-         <div className="relative cursor-pointer group">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 border-4 border-neutral-900 flex items-center justify-center overflow-hidden animate-spin-slow shadow-2xl shadow-purple-500/30 group-hover:border-purple-700 transition-colors">
-                <img src={post.avatar} className="w-full h-full object-cover opacity-80" alt="Music" />
-            </div>
-            {/* Music notes */}
-            <div className="absolute -top-4 -right-2 pointer-events-none">
-                 <Music size={12} className="text-purple-300 animate-bounce" style={{ animationDuration: '2.5s' }} />
-            </div>
-            <div className="absolute -top-7 right-0 pointer-events-none opacity-70">
-                 <Music size={10} className="text-pink-300 animate-bounce" style={{ animationDuration: '3s', animationDelay: '0.5s' }} />
-            </div>
-         </div>
       </div>
     </div>
   );
