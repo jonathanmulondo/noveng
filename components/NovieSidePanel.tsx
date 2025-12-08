@@ -30,21 +30,59 @@ interface NovieSidePanelProps {
 
 export const NovieSidePanel: React.FC<NovieSidePanelProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'novie',
-      content: "Hi! I'm Novie, your Arduino learning assistant! 👋\n\nI'm here to help you with:\n• Arduino code explanations\n• Circuit wiring advice\n• Component troubleshooting\n• Project ideas\n\nWhat would you like to learn today?",
-      timestamp: new Date()
+
+  // Generate a unique key for the current page
+  const pageKey = `novie_history_${location.pathname}`;
+
+  // Load conversation history from localStorage for current page
+  const loadHistory = () => {
+    try {
+      const saved = localStorage.getItem(pageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          messages: parsed.messages.map((m: any) => ({
+            ...m,
+            timestamp: new Date(m.timestamp)
+          })),
+          conversationHistory: parsed.conversationHistory
+        };
+      }
+    } catch (e) {
+      console.error('Failed to load conversation history:', e);
     }
-  ]);
+    return null;
+  };
+
+  const savedData = loadHistory();
+
+  const [messages, setMessages] = useState<Message[]>(
+    savedData?.messages || [
+      {
+        id: '1',
+        role: 'novie',
+        content: "Hi! I'm Novie, your Arduino learning assistant! 👋\n\nI'm here to help you with:\n• Arduino code explanations\n• Circuit wiring advice\n• Component troubleshooting\n• Project ideas\n\nWhat would you like to learn today?",
+        timestamp: new Date()
+      }
+    ]
+  );
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState<ConversationContext[]>([]);
+  const [conversationHistory, setConversationHistory] = useState<ConversationContext[]>(
+    savedData?.conversationHistory || []
+  );
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Save conversation history to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(pageKey, JSON.stringify({
+      messages,
+      conversationHistory
+    }));
+  }, [messages, conversationHistory, pageKey]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
