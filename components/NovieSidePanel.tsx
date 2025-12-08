@@ -242,21 +242,6 @@ export const NovieSidePanel: React.FC<NovieSidePanelProps> = ({ isOpen, onClose 
           </div>
         </div>
 
-        {/* Quick Questions */}
-        <div className="px-4 pb-3 border-t border-purple-100">
-          <p className="text-xs text-neutral-600 mb-2 font-medium">Quick questions:</p>
-          <div className="flex flex-wrap gap-2">
-            {QUICK_QUESTIONS.map((q, i) => (
-              <button
-                key={i}
-                onClick={() => handleSend(q)}
-                className="px-3 py-1.5 bg-white border-2 border-purple-200 text-purple-700 rounded-full text-xs font-medium hover:bg-purple-50 hover:border-purple-300 transition-all"
-              >
-                {q}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Input Area */}
         <div className="bg-white border-t-2 border-purple-100 p-4 shadow-lg">
