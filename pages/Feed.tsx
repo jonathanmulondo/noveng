@@ -87,6 +87,10 @@ const FeedPost: React.FC<{ post: FeedItem; isActive: boolean }> = ({ post, isAct
              preload="metadata"
              onError={(e) => {
                console.error('Video error:', e);
+               // If video fails to load, try to reload
+               if (videoRef.current) {
+                 videoRef.current.load();
+               }
              }}
              onLoadedData={() => {
                console.log('Video loaded:', post.src);
@@ -271,6 +275,34 @@ const FeedPost: React.FC<{ post: FeedItem; isActive: boolean }> = ({ post, isAct
 export const Feed: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activePostId, setActivePostId] = useState<string>(MOCK_FEED[0]?.id);
+
+  // Add caption styling to position at top
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      video::cue {
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        font-size: 18px;
+        font-weight: 600;
+        padding: 8px 12px;
+        border-radius: 4px;
+        line-height: 1.4;
+      }
+      video::-webkit-media-text-track-container {
+        position: absolute;
+        top: 80px !important;
+        bottom: auto !important;
+        width: 90%;
+        left: 5%;
+        text-align: center;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   const handleScroll = () => {
     if (!containerRef.current) return;
