@@ -67,7 +67,6 @@ const FeedPost: React.FC<{ post: FeedItem; isActive: boolean }> = ({ post, isAct
              src={post.src}
              className="w-full h-full object-contain bg-neutral-900"
              loop
-             muted
              playsInline
              crossOrigin="anonymous"
              preload="metadata"
