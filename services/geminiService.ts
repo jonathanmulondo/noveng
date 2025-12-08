@@ -58,7 +58,7 @@ export const chatWithNovie = async (
   }
 
   try {
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
     // Build context-aware message
     let contextualMessage = userMessage;
