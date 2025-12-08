@@ -3,10 +3,15 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 // Use Vite's environment variable format
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
 
+console.log('🔑 Gemini API Key loaded:', apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT FOUND');
+
 let ai: GoogleGenerativeAI | null = null;
 
 if (apiKey) {
   ai = new GoogleGenerativeAI(apiKey);
+  console.log('✅ GoogleGenerativeAI initialized');
+} else {
+  console.warn('⚠️ No API key found - Novie will not work');
 }
 
 // System prompt for Novie AI
@@ -99,12 +104,17 @@ export const chatWithNovie = async (
     }
   } catch (error: any) {
     console.error("Gemini API Error:", error);
+    console.error("Error details:", error?.message, error?.status, error?.statusText);
 
-    if (error?.message?.includes('API_KEY')) {
+    if (error?.message?.includes('API_KEY') || error?.message?.includes('API key')) {
       return "⚠️ **Invalid API Key**\n\nYour Gemini API key appears to be invalid. Please check that it's correct in your `.env` file.";
     }
 
-    return "Sorry, I'm having trouble connecting right now. Please try again in a moment! 🔧";
+    if (error?.status === 400) {
+      return `⚠️ **API Error**\n\n${error?.message || 'Bad request. The model name might be incorrect or the API format has changed.'}`;
+    }
+
+    return `Sorry, I'm having trouble connecting right now. Please try again in a moment! 🔧\n\nError: ${error?.message || 'Unknown error'}`;
   }
 };
 
