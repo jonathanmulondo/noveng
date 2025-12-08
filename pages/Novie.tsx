@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, Send, Sparkles, Lightbulb, Code, Cpu, Zap } from 'lucide-react';
+import { Bot, Send, Sparkles, Image as ImageIcon, X } from 'lucide-react';
 import { chatWithNovie } from '../services/geminiService';
+import { useLocation } from 'react-router-dom';
 
 interface Message {
   id: string;
   role: 'user' | 'novie';
   content: string;
   timestamp: Date;
+  imageUrl?: string;
 }
 
 interface ConversationContext {
@@ -24,18 +26,22 @@ const QUICK_QUESTIONS = [
 ];
 
 export const Novie: React.FC = () => {
+  const location = useLocation();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       role: 'novie',
-      content: "Hi! I'm Novie, your Arduino learning assistant! 👋\n\nI'm here to help you with:\n• Arduino code explanations\n• Circuit wiring advice\n• Component troubleshooting\n• Project ideas\n\nWhat would you like to learn today?",
+      content: "Hi! I'm Novie, your Arduino learning assistant! 👋\n\nI'm here to help you with:\n• Arduino code explanations\n• Circuit wiring advice\n• Component troubleshooting\n• Project ideas\n\n📸 **New!** You can now upload images of your circuits or screenshots for visual help!\n\nWhat would you like to learn today?",
       timestamp: new Date()
     }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [conversationHistory, setConversationHistory] = useState<ConversationContext[]>([]);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -45,24 +51,69 @@ export const Novie: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setSelectedImage(base64.split(',')[1]); // Remove data:image/jpeg;base64, prefix
+      setImagePreview(base64);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Get current page context
+  const getPageContext = () => {
+    const path = location.pathname;
+    if (path.includes('/courses')) return 'Courses Page';
+    if (path.includes('/simulator')) return 'Circuit Simulator';
+    if (path.includes('/feed')) return 'Community Feed';
+    if (path.includes('/module/')) {
+      const moduleId = path.split('/module/')[1];
+      return `Module: ${moduleId.replace(/_/g, ' ')}`;
+    }
+    return 'Dashboard';
+  };
+
   const handleSend = async (customMessage?: string) => {
     const messageText = customMessage || input.trim();
-    if (!messageText || isLoading) return;
+    if ((!messageText && !selectedImage) || isLoading) return;
 
     // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: messageText,
-      timestamp: new Date()
+      content: messageText || '📸 [Image sent]',
+      timestamp: new Date(),
+      imageUrl: imagePreview || undefined
     };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
     try {
-      // Call Gemini AI with conversation history
-      const aiResponse = await chatWithNovie(messageText, conversationHistory);
+      // Build context
+      const context = {
+        currentPage: getPageContext()
+      };
+
+      // Call Gemini AI with conversation history, context, and optional image
+      const aiResponse = await chatWithNovie(
+        messageText,
+        conversationHistory,
+        context,
+        selectedImage || undefined
+      );
 
       // Update conversation history
       setConversationHistory(prev => [
@@ -78,6 +129,9 @@ export const Novie: React.FC = () => {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, novieMessage]);
+
+      // Clear image after sending
+      clearImage();
     } catch (error) {
       console.error('Error getting AI response:', error);
       const errorMessage: Message = {
@@ -134,6 +188,13 @@ export const Novie: React.FC = () => {
                     : 'bg-white border-2 border-purple-100 text-neutral-800'
                 }`}
               >
+                {message.imageUrl && (
+                  <img
+                    src={message.imageUrl}
+                    alt="Uploaded"
+                    className="w-full rounded-2xl mb-3 border-2 border-white/20"
+                  />
+                )}
                 <div className="whitespace-pre-wrap leading-relaxed">{message.content}</div>
                 <div className={`text-xs mt-2 ${message.role === 'user' ? 'text-purple-100' : 'text-neutral-400'}`}>
                   {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -187,24 +248,65 @@ export const Novie: React.FC = () => {
 
       {/* Input Area */}
       <div className="bg-white border-t-2 border-purple-100 p-6 shadow-lg">
-        <div className="max-w-4xl mx-auto flex gap-4">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Ask Novie anything about Arduino..."
-            className="flex-1 px-6 py-4 bg-neutral-50 border-2 border-neutral-200 rounded-3xl focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all text-neutral-800 placeholder-neutral-400"
-            disabled={isLoading}
-          />
-          <button
-            onClick={() => handleSend()}
-            disabled={!input.trim() || isLoading}
-            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-3xl font-bold hover:from-purple-700 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-purple-200 flex items-center gap-2"
-          >
-            <Send size={20} />
-            Send
-          </button>
+        <div className="max-w-4xl mx-auto">
+          {/* Image Preview */}
+          {imagePreview && (
+            <div className="mb-4 relative inline-block">
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="h-24 rounded-2xl border-2 border-purple-200"
+              />
+              <button
+                onClick={clearImage}
+                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
+          <div className="flex gap-4">
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="hidden"
+            />
+
+            {/* Image upload button */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading}
+              className="px-4 py-4 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-3xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Upload image"
+            >
+              <ImageIcon size={20} />
+            </button>
+
+            {/* Text input */}
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+              placeholder="Ask Novie anything about Arduino..."
+              className="flex-1 px-6 py-4 bg-neutral-50 border-2 border-neutral-200 rounded-3xl focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all text-neutral-800 placeholder-neutral-400"
+              disabled={isLoading}
+            />
+
+            {/* Send button */}
+            <button
+              onClick={() => handleSend()}
+              disabled={(!input.trim() && !selectedImage) || isLoading}
+              className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-3xl font-bold hover:from-purple-700 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-purple-200 flex items-center gap-2"
+            >
+              <Send size={20} />
+              Send
+            </button>
+          </div>
         </div>
       </div>
     </div>
