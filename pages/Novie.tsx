@@ -31,7 +31,7 @@ export const Novie: React.FC = () => {
     {
       id: '1',
       role: 'novie',
-      content: "Hi! I'm Novie, your Arduino learning assistant! 👋\n\nI'm here to help you with:\n• Arduino code explanations\n• Circuit wiring advice\n• Component troubleshooting\n• Project ideas\n\n📸 **New!** You can now upload images of your circuits or screenshots for visual help!\n\nWhat would you like to learn today?",
+      content: "Hi! I'm Novie, your Arduino learning assistant! 👋\n\nI'm here to help you with:\n• Arduino code explanations\n• Circuit wiring advice\n• Component troubleshooting\n• Project ideas\n\nWhat would you like to learn today?",
       timestamp: new Date()
     }
   ]);
@@ -158,7 +158,7 @@ export const Novie: React.FC = () => {
             </div>
             <div>
               <h1 className="text-3xl font-display font-bold flex items-center gap-3">
-                Novie AI
+                Novie
                 <Sparkles size={24} className="fill-white animate-pulse" />
               </h1>
               <p className="text-purple-100">Your personal Arduino learning companion</p>

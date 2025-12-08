@@ -1,12 +1,12 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Use Vite's environment variable format
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
 
-let ai: GoogleGenAI | null = null;
+let ai: GoogleGenerativeAI | null = null;
 
 if (apiKey) {
-  ai = new GoogleGenAI({ apiKey });
+  ai = new GoogleGenerativeAI(apiKey);
 }
 
 // System prompt for Novie AI
@@ -53,7 +53,7 @@ export const chatWithNovie = async (
   }
 
   try {
-    const model = "gemini-2.0-flash-exp";
+    const model = ai.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
     // Build context-aware message
     let contextualMessage = userMessage;
@@ -69,46 +69,33 @@ export const chatWithNovie = async (
       }
     }
 
-    // Build conversation contents
-    const contents = [
-      { role: 'user', parts: NOVIE_SYSTEM_PROMPT },
-      { role: 'model', parts: "Got it! I'm Novie, ready to help with Arduino and electronics learning. I'll keep my answers friendly, practical, and concise! 🚀" },
-      ...conversationHistory,
-      { role: 'user', parts: contextualMessage }
+    // Build conversation history in the correct format
+    const history = [
+      { role: 'user', parts: [{ text: NOVIE_SYSTEM_PROMPT }] },
+      { role: 'model', parts: [{ text: "Got it! I'm Novie, ready to help with Arduino and electronics learning. I'll keep my answers friendly, practical, and concise! 🚀" }] },
+      ...conversationHistory.map(msg => ({
+        role: msg.role,
+        parts: [{ text: msg.parts }]
+      }))
     ];
 
     // If image is provided, add it to the prompt
-    let requestContents;
     if (imageBase64) {
-      requestContents = contents.map(msg => `${msg.role}: ${msg.parts}`).join('\n') +
-        `\n\n[User has uploaded an image - please analyze it and help with their question]`;
-
-      // For vision, we need to use a different format
-      const response = await ai.models.generateContent({
-        model: model,
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              { text: requestContents },
-              {
-                inlineData: {
-                  mimeType: 'image/jpeg',
-                  data: imageBase64
-                }
-              }
-            ]
+      const chat = model.startChat({ history });
+      const result = await chat.sendMessage([
+        { text: contextualMessage },
+        {
+          inlineData: {
+            mimeType: 'image/jpeg',
+            data: imageBase64
           }
-        ]
-      });
-      return response.text || "I apologize, I couldn't analyze the image. Could you try again?";
+        }
+      ]);
+      return result.response.text() || "I apologize, I couldn't analyze the image. Could you try again?";
     } else {
-      requestContents = contents.map(msg => `${msg.role}: ${msg.parts}`).join('\n');
-      const response = await ai.models.generateContent({
-        model: model,
-        contents: requestContents,
-      });
-      return response.text || "I apologize, I couldn't generate a response. Could you try rephrasing your question?";
+      const chat = model.startChat({ history });
+      const result = await chat.sendMessage(contextualMessage);
+      return result.response.text() || "I apologize, I couldn't generate a response. Could you try rephrasing your question?";
     }
   } catch (error: any) {
     console.error("Gemini API Error:", error);
