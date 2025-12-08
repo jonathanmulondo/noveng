@@ -35,7 +35,7 @@ export const Layout: React.FC = () => {
                 NovEng
               </h1>
               <p className="text-xs text-purple-400 font-medium uppercase tracking-widest">
-                Learn • Build • Share
+                Hands on the Future
               </p>
             </div>
           </div>
