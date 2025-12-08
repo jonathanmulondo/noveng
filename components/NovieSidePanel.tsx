@@ -145,10 +145,10 @@ export const NovieSidePanel: React.FC<NovieSidePanelProps> = ({ isOpen, onClose 
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop - only blur on mobile */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 transition-opacity"
+          className="fixed inset-0 bg-black/30 md:bg-transparent md:backdrop-blur-none backdrop-blur-sm z-50 transition-opacity"
           onClick={onClose}
         />
       )}
