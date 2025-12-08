@@ -111,8 +111,8 @@ export const Layout: React.FC = () => {
       <main className="flex-1 overflow-y-auto relative pb-20 md:pb-0 bg-gradient-to-br from-purple-50/30 via-pink-50/20 to-white">
         <Outlet />
 
-        {/* Floating Novie AI Button - Appears on all pages except /novie */}
-        {location.pathname !== '/novie' && <NovieFloatingButton />}
+        {/* Floating Novie AI Button - Appears on all pages except /novie and /feed */}
+        {location.pathname !== '/novie' && location.pathname !== '/feed' && <NovieFloatingButton />}
       </main>
 
       {/* Mobile Bottom Nav - Purple/Pink Theme */}

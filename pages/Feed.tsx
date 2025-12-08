@@ -202,7 +202,7 @@ const FeedPost: React.FC<{ post: FeedItem; isActive: boolean }> = ({ post, isAct
       </div>
 
       {/* Bottom Left Content Info */}
-      <div className="absolute bottom-0 left-0 right-24 p-5 z-20 text-white pb-28 md:pb-10">
+      <div className="absolute bottom-32 left-0 right-24 p-5 z-20 text-white md:bottom-20">
          {/* Author Name */}
          <div className="flex items-center gap-2.5 mb-3">
             <h3 className="font-bold text-lg shadow-black drop-shadow-2xl cursor-pointer hover:underline tracking-tight">
@@ -276,26 +276,29 @@ export const Feed: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activePostId, setActivePostId] = useState<string>(MOCK_FEED[0]?.id);
 
-  // Add caption styling to position at top
+  // Add caption styling to position in middle area - VERY VISIBLE
   useEffect(() => {
     const style = document.createElement('style');
     style.textContent = `
       video::cue {
-        background-color: rgba(0, 0, 0, 0.8);
-        color: white;
-        font-size: 18px;
-        font-weight: 600;
-        padding: 8px 12px;
-        border-radius: 4px;
-        line-height: 1.4;
+        background-color: rgba(0, 0, 0, 0.95) !important;
+        color: white !important;
+        font-size: 22px !important;
+        font-weight: 700 !important;
+        padding: 12px 16px !important;
+        border-radius: 8px !important;
+        line-height: 1.4 !important;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.9) !important;
       }
       video::-webkit-media-text-track-container {
-        position: absolute;
-        top: 80px !important;
+        position: absolute !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
         bottom: auto !important;
-        width: 90%;
-        left: 5%;
-        text-align: center;
+        width: 90% !important;
+        left: 5% !important;
+        text-align: center !important;
+        z-index: 100 !important;
       }
     `;
     document.head.appendChild(style);
