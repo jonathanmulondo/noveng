@@ -65,7 +65,7 @@ const FeedPost: React.FC<{ post: FeedItem; isActive: boolean }> = ({ post, isAct
            <video
              ref={videoRef}
              src={post.src}
-             className="w-full h-full object-cover bg-neutral-900"
+             className="w-full h-full object-contain bg-neutral-900"
              loop
              muted
              playsInline
