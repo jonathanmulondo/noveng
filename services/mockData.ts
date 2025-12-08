@@ -196,156 +196,58 @@ void loop() {
 export const MOCK_FEED: FeedItem[] = [
    {
     id: 'post_1765193079569',
-    author: 'Jonathan Mulondo',
+    author: 'NovEng',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     type: 'video',
     src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765193071144-VID-20251208-WA0011.mp4',
-    caption: 'Circuit building and testing 🔌🎯 #arduino #circuits #innovation',
+    caption: 'Understanding breadboards - your temporary workspace for building circuits without soldering! Learn about power rails and connection rows 🔌⚡ #breadboard #electronics #arduino',
     likes: 0,
     comments: 0,
-    tags: ['arduino', 'circuits', 'innovation']
+    tags: ['breadboard', 'electronics', 'arduino']
   },
   {
     id: 'post_1765193065548',
-    author: 'Jonathan Mulondo',
+    author: 'NovEng',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     type: 'video',
     src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765193057935-VID-20251208-WA0010.mp4',
-    caption: 'Learning Arduino fundamentals 📚⚡ #arduino #education #tech',
+    caption: 'Quick tour of the Arduino board! Power areas (3.3V, 5V, GND), digital & analog pins, and the microcontroller chip explained 📚⚡ #arduino #tutorial #beginner',
     likes: 0,
     comments: 0,
-    tags: ['arduino', 'education', 'tech']
+    tags: ['arduino', 'tutorial', 'beginner']
   },
   {
     id: 'post_1765193051832',
-    author: 'Jonathan Mulondo',
+    author: 'NovEng',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     type: 'video',
     src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765193039913-VID-20251208-WA0009.mp4',
-    caption: 'Hands-on electronics project 🔧✨ #arduino #maker #stem',
+    caption: 'Digital pins explained! Pins 0-13 control LEDs, buzzers & more. Turn things ON and OFF with your Arduino 💡🔊 #digitalpins #arduino #electronics',
     likes: 0,
     comments: 0,
-    tags: ['arduino', 'maker', 'stem']
+    tags: ['digitalpins', 'arduino', 'electronics']
   },
   {
     id: 'post_1765193033889',
-    author: 'Jonathan Mulondo',
+    author: 'NovEng',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     type: 'video',
     src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765193027936-VID-20251208-WA0008.mp4',
-    caption: 'Building with Arduino 🛠️💡 #arduino #diy #engineering',
+    caption: 'Analog pins (A0-A5) read smooth, continuous signals from sensors like light, temperature & rotation! Perfect for LDRs and temp sensors 🌡️📊 #analogpins #sensors #arduino',
     likes: 0,
     comments: 0,
-    tags: ['arduino', 'diy', 'engineering']
+    tags: ['analogpins', 'sensors', 'arduino']
   },
   {
     id: 'post_1765193022072',
-    author: 'Jonathan Mulondo',
+    author: 'NovEng',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     type: 'video',
     src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765193016490-VID-20251208-WA0007.mp4',
-    caption: 'Arduino project demo 🔌⚡ #arduino #electronics #maker',
+    caption: 'Meet the Arduino UNO! A small microcontroller board that lets you control electronics using code. Powered via USB - let\'s get started! 🚀💻 #arduinouno #microcontroller #coding',
     likes: 0,
     comments: 0,
-    tags: ['arduino', 'electronics', 'maker']
-  },
-  {
-    id: 'post_1765189482326',
-    author: 'Jonathan Mulondo',
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
-    type: 'video',
-    src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765189479995-arduino1.mp4',
-    caption: 'My first Arduino project! Building and testing circuits 🔌⚡ #arduino #electronics #maker',
-    likes: 0,
-    comments: 0,
-    tags: ['arduino', 'electronics', 'maker']
-  },
-  {
-    id: 'post_1',
-    author: 'ArduinoMaster',
-    avatar: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?auto=format&fit=crop&w=150&q=80',
-    type: 'video',
-    src: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-    caption: 'Just finished my Arduino robotic arm! Controlled with servo motors and a joystick 🤖 #arduino #robotics #maker',
-    likes: 3400,
-    comments: 215,
-    tags: ['arduino', 'robotics', 'servos']
-  },
-  {
-    id: 'post_2',
-    author: 'CircuitQueen',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
-    type: 'video',
-    src: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    caption: 'LED matrix animation running on Arduino! Coded from scratch 💡✨ #arduino #leds #coding',
-    likes: 2850,
-    comments: 142,
-    tags: ['arduino', 'leds', 'animation']
-  },
-  {
-    id: 'post_3',
-    author: 'MakerMike',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80',
-    type: 'video',
-    src: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-    caption: 'Smart plant watering system using Arduino + soil moisture sensor 🌱💧 #arduino #iot #plants',
-    likes: 4200,
-    comments: 298,
-    tags: ['arduino', 'iot', 'automation']
-  },
-  {
-    id: 'post_4',
-    author: 'TechTina',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80',
-    type: 'video',
-    src: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-    caption: 'Ultrasonic distance sensor setup tutorial! Perfect for obstacle avoidance 📏⚡ #arduino #sensors #tutorial',
-    likes: 1920,
-    comments: 87,
-    tags: ['arduino', 'sensors', 'tutorial']
-  },
-  {
-    id: 'post_5',
-    author: 'CodeCraft',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80',
-    type: 'video',
-    src: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
-    caption: 'Temperature-controlled fan using Arduino and DHT11 sensor 🌡️🔥 #arduino #automation #diy',
-    likes: 3150,
-    comments: 176,
-    tags: ['arduino', 'temperature', 'automation']
-  },
-  {
-    id: 'post_6',
-    author: 'ElectroElla',
-    avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=150&q=80',
-    type: 'video',
-    src: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
-    caption: 'My first Arduino traffic light system! Red, yellow, green sequencing ⚠️🚦 #arduino #beginner #learning',
-    likes: 2640,
-    comments: 134,
-    tags: ['arduino', 'beginner', 'leds']
-  },
-  {
-    id: 'post_7',
-    author: 'RobotRaj',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
-    type: 'video',
-    src: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-    caption: 'Bluetooth-controlled Arduino car! Control from your phone 📱🚗 #arduino #bluetooth #robotics',
-    likes: 5200,
-    comments: 412,
-    tags: ['arduino', 'bluetooth', 'car']
-  },
-  {
-    id: 'post_8',
-    author: 'WireWizard',
-    avatar: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?auto=format&fit=crop&w=150&q=80',
-    type: 'video',
-    src: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
-    caption: 'Clean breadboard wiring tips for Arduino projects! 🔧✨ #arduino #breadboard #tips',
-    likes: 1780,
-    comments: 93,
-    tags: ['arduino', 'tips', 'breadboard']
+    tags: ['arduinouno', 'microcontroller', 'coding']
   }
+  
 ];
