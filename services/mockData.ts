@@ -195,6 +195,61 @@ void loop() {
 // Arduino-focused community feed
 export const MOCK_FEED: FeedItem[] = [
    {
+    id: 'post_1765193079569',
+    author: 'Jonathan Mulondo',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+    type: 'video',
+    src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765193071144-VID-20251208-WA0011.mp4',
+    caption: 'Circuit building and testing 🔌🎯 #arduino #circuits #innovation',
+    likes: 0,
+    comments: 0,
+    tags: ['arduino', 'circuits', 'innovation']
+  },
+  {
+    id: 'post_1765193065548',
+    author: 'Jonathan Mulondo',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+    type: 'video',
+    src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765193057935-VID-20251208-WA0010.mp4',
+    caption: 'Learning Arduino fundamentals 📚⚡ #arduino #education #tech',
+    likes: 0,
+    comments: 0,
+    tags: ['arduino', 'education', 'tech']
+  },
+  {
+    id: 'post_1765193051832',
+    author: 'Jonathan Mulondo',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+    type: 'video',
+    src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765193039913-VID-20251208-WA0009.mp4',
+    caption: 'Hands-on electronics project 🔧✨ #arduino #maker #stem',
+    likes: 0,
+    comments: 0,
+    tags: ['arduino', 'maker', 'stem']
+  },
+  {
+    id: 'post_1765193033889',
+    author: 'Jonathan Mulondo',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+    type: 'video',
+    src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765193027936-VID-20251208-WA0008.mp4',
+    caption: 'Building with Arduino 🛠️💡 #arduino #diy #engineering',
+    likes: 0,
+    comments: 0,
+    tags: ['arduino', 'diy', 'engineering']
+  },
+  {
+    id: 'post_1765193022072',
+    author: 'Jonathan Mulondo',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+    type: 'video',
+    src: 'https://mtvwxjuofppthkrwuxnu.supabase.co/storage/v1/object/public/videos/1765193016490-VID-20251208-WA0007.mp4',
+    caption: 'Arduino project demo 🔌⚡ #arduino #electronics #maker',
+    likes: 0,
+    comments: 0,
+    tags: ['arduino', 'electronics', 'maker']
+  },
+  {
     id: 'post_1765189482326',
     author: 'Jonathan Mulondo',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
