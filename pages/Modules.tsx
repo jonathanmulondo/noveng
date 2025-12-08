@@ -28,6 +28,7 @@ const DIFFICULTY_CONFIG = {
 
 export const Modules: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel | 'All'>('All');
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,15 +51,18 @@ export const Modules: React.FC = () => {
     loadModules();
   }, []);
 
-  // Filter modules by search query
+  // Filter modules by search query and difficulty
   const filteredModules = modules.filter(module => {
-    if (!searchQuery.trim()) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      module.title.toLowerCase().includes(query) ||
-      module.description.toLowerCase().includes(query) ||
-      module.category.toLowerCase().includes(query)
-    );
+    // Search filter
+    const matchesSearch = !searchQuery.trim() ||
+      module.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      module.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      module.category.toLowerCase().includes(searchQuery.toLowerCase());
+
+    // Difficulty filter
+    const matchesDifficulty = selectedDifficulty === 'All' || module.difficulty === selectedDifficulty;
+
+    return matchesSearch && matchesDifficulty;
   });
 
   // Group modules by difficulty
@@ -92,6 +96,48 @@ export const Modules: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+          </div>
+
+          {/* Difficulty Filter Tabs */}
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => setSelectedDifficulty('All')}
+              className={`px-6 py-3 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                selectedDifficulty === 'All'
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-200'
+                  : 'bg-white text-neutral-600 border-2 border-neutral-200 hover:border-purple-300'
+              }`}
+            >
+              <BookOpen size={16} />
+              All Levels
+            </button>
+            {DIFFICULTY_LEVELS.map((level) => {
+              const config = DIFFICULTY_CONFIG[level];
+              const Icon = config.icon;
+              const count = modules.filter(m => m.difficulty === level).length;
+
+              return (
+                <button
+                  key={level}
+                  onClick={() => setSelectedDifficulty(level)}
+                  className={`px-6 py-3 rounded-full text-sm font-semibold transition-all flex items-center gap-2 ${
+                    selectedDifficulty === level
+                      ? `bg-gradient-to-r from-${config.color}-500 to-${config.color}-600 text-white shadow-lg`
+                      : 'bg-white text-neutral-600 border-2 border-neutral-200 hover:border-purple-300'
+                  }`}
+                >
+                  <Icon size={16} />
+                  {level}
+                  <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${
+                    selectedDifficulty === level
+                      ? 'bg-white/20'
+                      : 'bg-neutral-100'
+                  }`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Stats */}
