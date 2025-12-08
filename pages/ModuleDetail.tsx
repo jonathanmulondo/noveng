@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, Module } from '../services/api';
 import { explainCode } from '../services/geminiService';
-import { ChevronLeft, BookOpen, Loader2, AlertCircle, Star, Clock, Users, Bot, Send, Sparkles, CheckCircle2, PlayCircle, Code2, BookMarked, List, X } from 'lucide-react';
+import { ChevronLeft, BookOpen, Loader2, AlertCircle, Star, Clock, Users, Bot, Send, Sparkles, CheckCircle2, PlayCircle, Code2, BookMarked, List, X, Target } from 'lucide-react';
+import { ModuleQuiz } from '../components/ModuleQuiz';
+import { getQuizBySlug } from '../data/quizzes';
 
 interface LessonSection {
   id: string;
@@ -27,9 +29,10 @@ export const ModuleDetail: React.FC = () => {
   const [overviewContent, setOverviewContent] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'theory' | 'code'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'theory' | 'code' | 'quiz'>('overview');
   const [activeSection, setActiveSection] = useState<string>('');
   const [isNovieChatOpen, setIsNovieChatOpen] = useState(false);
+  const [quiz, setQuiz] = useState<any>(null);
 
   // Chatbot state
   const [messages, setMessages] = useState<Message[]>([
@@ -114,6 +117,10 @@ export const ModuleDetail: React.FC = () => {
 
         const moduleData = await api.getModule(id);
         setModule(moduleData);
+
+        // Load quiz if available
+        const moduleQuiz = getQuizBySlug(id);
+        setQuiz(moduleQuiz);
 
         const content = await api.getModuleContent(id);
         setOverviewContent(content.overview);
@@ -373,6 +380,18 @@ export const ModuleDetail: React.FC = () => {
                     <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 to-pink-500" />
                   )}
                 </button>
+                <button
+                  onClick={() => setActiveTab('quiz')}
+                  className={`flex-1 px-6 py-4 font-semibold transition-all relative flex items-center justify-center gap-2 ${
+                    activeTab === 'quiz' ? 'text-purple-600' : 'text-neutral-500 hover:text-neutral-700'
+                  }`}
+                >
+                  <Target size={18} />
+                  Quiz {quiz && `(${quiz.questions.length})`}
+                  {activeTab === 'quiz' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 to-pink-500" />
+                  )}
+                </button>
               </div>
 
               {/* Content */}
@@ -381,6 +400,33 @@ export const ModuleDetail: React.FC = () => {
                   <div className="bg-gradient-to-b from-purple-900 to-purple-800 p-8 rounded-2xl shadow-lg text-white">
                     {renderContent(overviewContent, false)}
                   </div>
+                ) : activeTab === 'quiz' ? (
+                  quiz ? (
+                    <ModuleQuiz
+                      moduleSlug={id!}
+                      questions={quiz.questions}
+                      passingScore={70}
+                      onComplete={(score, passed) => {
+                        console.log(`Quiz complete! Score: ${score}%, Passed: ${passed}`);
+                        // TODO: Save to user progress database
+                      }}
+                    />
+                  ) : (
+                    <div className="text-center py-16 bg-white rounded-3xl border-2 border-neutral-200">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mx-auto mb-6">
+                        <Target size={36} className="text-purple-600" />
+                      </div>
+                      <h3 className="text-2xl font-display font-bold text-neutral-800 mb-2">
+                        Quiz Coming Soon!
+                      </h3>
+                      <p className="text-neutral-600 mb-4">
+                        We're preparing an interactive quiz for this module.
+                      </p>
+                      <p className="text-sm text-neutral-500">
+                        Check back soon or try another module's quiz!
+                      </p>
+                    </div>
+                  )
                 ) : currentSection ? (
                   <div>
                     <h2 className="text-2xl font-display font-bold text-neutral-800 mb-6 flex items-center gap-3">
