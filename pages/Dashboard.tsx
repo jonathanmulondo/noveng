@@ -1,10 +1,53 @@
-import React from 'react';
-import { MOCK_USER, MOCK_MODULES } from '../services/mockData';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { MOCK_MODULES } from '../services/mockData';
 import { Flame, BookOpen, ArrowRight, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Dashboard: React.FC = () => {
-  const inProgressModules = MOCK_MODULES.filter(m => m.progress > 0 && m.progress < 100);
+  const { user } = useAuth();
+  const [userProgress, setUserProgress] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Get user data with defaults for new users
+  const userName = user?.name?.split(' ')[0] || 'User';
+  const level = user?.profile?.level || 1;
+  const currentXp = user?.profile?.current_xp || 0;
+  const nextLevelXp = user?.profile?.next_level_xp || 100;
+  const streakDays = user?.profile?.streak_days || 0;
+  const totalHours = user?.profile?.total_learning_hours || 0;
+
+  // Fetch user's real progress (completed modules, etc.)
+  useEffect(() => {
+    const fetchProgress = async () => {
+      if (!user?.id) return;
+
+      try {
+        // For now, we'll use empty progress until we implement the backend endpoint
+        // TODO: Fetch from API endpoint
+        setUserProgress({
+          completedModules: [],
+          inProgressModules: [],
+          skills: {
+            hardware: 0,
+            programming: 0,
+            circuits: 0,
+            troubleshooting: 0
+          }
+        });
+      } catch (error) {
+        console.error('Error fetching progress:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProgress();
+  }, [user?.id]);
+
+  const completedModulesCount = userProgress?.completedModules?.length || 0;
+  const inProgressModules = userProgress?.inProgressModules || [];
+  const skills = userProgress?.skills || { hardware: 0, programming: 0, circuits: 0, troubleshooting: 0 };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-white">
@@ -12,30 +55,32 @@ export const Dashboard: React.FC = () => {
 
         {/* Minimalist Welcome Section */}
         <section className="space-y-3 md:space-y-4 pt-16 md:pt-0">
-          <div className="flex items-center gap-2 md:gap-3 text-purple-600">
-            <Flame size={20} className="fill-purple-600 animate-pulse md:w-6 md:h-6" />
-            <span className="text-xs md:text-sm font-medium uppercase tracking-wider">
-              {MOCK_USER.stats.streakDays} Day Streak
-            </span>
-          </div>
+          {streakDays > 0 && (
+            <div className="flex items-center gap-2 md:gap-3 text-purple-600">
+              <Flame size={20} className="fill-purple-600 animate-pulse md:w-6 md:h-6" />
+              <span className="text-xs md:text-sm font-medium uppercase tracking-wider">
+                {streakDays} Day Streak
+              </span>
+            </div>
+          )}
 
           <h1 className="font-display text-3xl md:text-5xl lg:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 leading-tight">
-            Welcome back,<br />{MOCK_USER.name.split(' ')[0]}
+            Welcome back,<br />{userName}
           </h1>
 
           <p className="text-base md:text-xl text-neutral-600 max-w-2xl leading-relaxed">
-            You're on track to reach Level {MOCK_USER.stats.level + 1}.
-            Just <span className="font-semibold text-purple-600">{MOCK_USER.stats.nextLevelXp - MOCK_USER.stats.currentXp} XP</span> away.
+            You're on track to reach Level {level + 1}.
+            Just <span className="font-semibold text-purple-600">{nextLevelXp - currentXp} XP</span> away.
           </p>
         </section>
 
         {/* Minimalist Stats - Single Row */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
           {[
-            { label: 'Level', value: MOCK_USER.stats.level, suffix: '' },
-            { label: 'Total XP', value: MOCK_USER.stats.currentXp.toLocaleString(), suffix: '' },
-            { label: 'Modules', value: MOCK_USER.completedModules.length, suffix: '/18' },
-            { label: 'This Week', value: '12.5h', suffix: '' },
+            { label: 'Level', value: level, suffix: '' },
+            { label: 'Total XP', value: currentXp.toLocaleString(), suffix: '' },
+            { label: 'Modules', value: completedModulesCount, suffix: '/18' },
+            { label: 'This Week', value: totalHours > 0 ? `${totalHours.toFixed(1)}h` : '0h', suffix: '' },
           ].map((stat, i) => (
             <div key={i} className="group relative">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -148,7 +193,7 @@ export const Dashboard: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-              {Object.entries(MOCK_USER.stats.skills).map(([skill, value]) => (
+              {Object.entries(skills).map(([skill, value]) => (
                 <div key={skill} className="space-y-2 md:space-y-3">
                   <div className="flex justify-between items-baseline">
                     <span className="font-medium capitalize text-sm md:text-lg">

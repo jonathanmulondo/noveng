@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Zap, BookOpen, Users, Home, Sparkles, Bot, Menu, X } from 'lucide-react';
-import { MOCK_USER } from '../services/mockData';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Zap, BookOpen, Users, Home, Sparkles, Bot, Menu, X, Settings } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import { NovieFloatingButton } from './NovieFloatingButton';
 
 export const Layout: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const NAV_ITEMS = [
@@ -97,17 +99,26 @@ export const Layout: React.FC = () => {
 
         {/* User Profile */}
         <div className="p-6 border-t border-purple-900/30">
-          <div className="group relative">
+          <div
+            className="group relative cursor-pointer"
+            onClick={() => navigate('/settings')}
+          >
             {/* Gradient hover effect */}
             <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-600/0 to-pink-600/0 group-hover:from-purple-600/10 group-hover:to-pink-600/10 transition-all duration-300" />
 
-            <div className="relative flex items-center gap-4 p-4 rounded-2xl cursor-pointer">
+            <div className="relative flex items-center gap-4 p-4 rounded-2xl">
               <div className="relative">
-                <img
-                  src={MOCK_USER.avatar}
-                  alt="User"
-                  className="w-12 h-12 rounded-full border-2 border-purple-500/30 group-hover:border-purple-500 transition-all"
-                />
+                {user?.profile?.profile_picture_url ? (
+                  <img
+                    src={user.profile.profile_picture_url}
+                    alt="Profile"
+                    className="w-12 h-12 rounded-full border-2 border-purple-500/30 group-hover:border-purple-500 transition-all object-cover"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 border-2 border-purple-500/30 group-hover:border-purple-500 transition-all flex items-center justify-center text-white text-lg font-bold">
+                    {user?.name?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                )}
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full border-2 border-neutral-900 flex items-center justify-center">
                   <Sparkles size={10} className="text-white fill-white" />
                 </div>
@@ -115,10 +126,10 @@ export const Layout: React.FC = () => {
 
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white truncate">
-                  {MOCK_USER.name}
+                  {user?.name || 'User'}
                 </p>
                 <p className="text-xs text-purple-400 truncate">
-                  Level {MOCK_USER.stats.level} • {MOCK_USER.stats.currentXp} XP
+                  Level {user?.profile?.level || 1} • {user?.profile?.current_xp || 0} XP
                 </p>
               </div>
             </div>
