@@ -80,31 +80,36 @@ export const ProfileSettings: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-white p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen relative p-4 md:p-8">
+      <div className="max-w-4xl mx-auto space-y-6 pt-16 md:pt-0">
 
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-              Profile Settings
+            <h1 className="text-3xl font-display font-bold text-white">
+              Profile <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Settings</span>
             </h1>
-            <p className="text-neutral-600 mt-1">Manage your account information</p>
+            <p className="text-purple-300 mt-1">Manage your account information</p>
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-colors"
+            className="relative group"
           >
-            <LogOut size={18} />
-            <span className="hidden md:inline">Logout</span>
+            <div className="absolute inset-0 bg-red-500 rounded-xl blur opacity-0 group-hover:opacity-60 transition-opacity" />
+            <div className="relative flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-400/30 hover:border-red-400/50 backdrop-blur-sm text-red-300 rounded-xl transition-all">
+              <LogOut size={18} />
+              <span className="hidden md:inline">Logout</span>
+            </div>
           </button>
         </div>
 
         {/* Profile Card */}
-        <div className="bg-white rounded-3xl shadow-xl p-8 border-2 border-purple-100">
+        <div className="relative group">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-3xl blur opacity-50 group-hover:opacity-75 transition-opacity duration-500" />
+          <div className="relative bg-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/10">
 
           {/* Profile Picture Section */}
-          <div className="flex flex-col md:flex-row gap-8 items-start md:items-center mb-8 pb-8 border-b border-neutral-200">
+          <div className="flex flex-col md:flex-row gap-8 items-start md:items-center mb-8 pb-8 border-b border-white/10">
             <div className="relative group">
               {profileData.profilePicture ? (
                 <img
@@ -131,26 +136,29 @@ export const ProfileSettings: React.FC = () => {
             </div>
 
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-neutral-900">
+              <h2 className="text-2xl font-bold text-white">
                 {profileData.firstName} {profileData.lastName}
               </h2>
-              <p className="text-neutral-600">{profileData.email}</p>
+              <p className="text-purple-300">{profileData.email}</p>
               <button
                 onClick={() => setIsEditing(!isEditing)}
-                className="mt-4 flex items-center gap-2 px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-xl transition-colors"
+                className="relative group mt-4"
               >
-                <Edit size={16} />
-                {isEditing ? 'Cancel' : 'Edit Profile'}
+                <div className="absolute inset-0 bg-purple-500 rounded-xl blur opacity-0 group-hover:opacity-40 transition-opacity" />
+                <div className="relative flex items-center gap-2 px-4 py-2 bg-purple-500/20 border border-purple-400/30 hover:border-purple-400/50 backdrop-blur-sm text-purple-200 rounded-xl transition-all">
+                  <Edit size={16} />
+                  {isEditing ? 'Cancel' : 'Edit Profile'}
+                </div>
               </button>
             </div>
           </div>
 
           {/* Message Display */}
           {message && (
-            <div className={`mb-6 p-4 rounded-2xl ${
+            <div className={`mb-6 p-4 rounded-2xl backdrop-blur-sm ${
               message.includes('success')
-                ? 'bg-green-50 border-2 border-green-200 text-green-800'
-                : 'bg-red-50 border-2 border-red-200 text-red-800'
+                ? 'bg-green-500/20 border-2 border-green-400/30 text-green-300'
+                : 'bg-red-500/20 border-2 border-red-400/30 text-red-300'
             }`}>
               {message}
             </div>
@@ -158,41 +166,41 @@ export const ProfileSettings: React.FC = () => {
 
           {/* Profile Information Form */}
           <div className="space-y-6">
-            <h3 className="text-xl font-bold text-neutral-800 mb-4">Personal Information</h3>
+            <h3 className="text-xl font-bold text-white mb-4">Personal Information</h3>
 
             {/* First Name & Last Name */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-neutral-700 mb-2">
+                <label className="block text-sm font-semibold text-purple-200 mb-2">
                   First Name
                 </label>
                 <div className="relative">
-                  <User size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
+                  <User size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-400" />
                   <input
                     type="text"
                     value={profileData.firstName}
                     onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
                     disabled={!isEditing}
-                    className={`w-full pl-12 pr-4 py-3 bg-neutral-50 border-2 border-neutral-200 rounded-2xl transition-all ${
-                      isEditing ? 'focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-100' : 'cursor-not-allowed'
+                    className={`w-full pl-12 pr-4 py-3 bg-white/10 backdrop-blur-sm border-2 border-white/10 rounded-2xl text-white placeholder-purple-300/50 transition-all ${
+                      isEditing ? 'focus:outline-none focus:border-purple-400/50 focus:bg-white/15' : 'cursor-not-allowed opacity-60'
                     }`}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-neutral-700 mb-2">
+                <label className="block text-sm font-semibold text-purple-200 mb-2">
                   Last Name
                 </label>
                 <div className="relative">
-                  <User size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
+                  <User size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-400" />
                   <input
                     type="text"
                     value={profileData.lastName}
                     onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
                     disabled={!isEditing}
-                    className={`w-full pl-12 pr-4 py-3 bg-neutral-50 border-2 border-neutral-200 rounded-2xl transition-all ${
-                      isEditing ? 'focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-100' : 'cursor-not-allowed'
+                    className={`w-full pl-12 pr-4 py-3 bg-white/10 backdrop-blur-sm border-2 border-white/10 rounded-2xl text-white placeholder-purple-300/50 transition-all ${
+                      isEditing ? 'focus:outline-none focus:border-purple-400/50 focus:bg-white/15' : 'cursor-not-allowed opacity-60'
                     }`}
                   />
                 </div>
@@ -201,56 +209,56 @@ export const ProfileSettings: React.FC = () => {
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-semibold text-neutral-700 mb-2">
+              <label className="block text-sm font-semibold text-purple-200 mb-2">
                 Email Address
               </label>
               <div className="relative">
-                <Mail size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
+                <Mail size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-400" />
                 <input
                   type="email"
                   value={profileData.email}
                   disabled
-                  className="w-full pl-12 pr-4 py-3 bg-neutral-100 border-2 border-neutral-200 rounded-2xl cursor-not-allowed"
+                  className="w-full pl-12 pr-4 py-3 bg-white/5 backdrop-blur-sm border-2 border-white/10 rounded-2xl text-white cursor-not-allowed opacity-60"
                 />
               </div>
-              <p className="text-xs text-neutral-500 mt-1">Email cannot be changed</p>
+              <p className="text-xs text-purple-300/70 mt-1">Email cannot be changed</p>
             </div>
 
             {/* Phone & Date of Birth */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-neutral-700 mb-2">
+                <label className="block text-sm font-semibold text-purple-200 mb-2">
                   Phone Number
                 </label>
                 <div className="relative">
-                  <Phone size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
+                  <Phone size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-400" />
                   <input
                     type="tel"
                     value={profileData.phone}
                     onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
                     disabled={!isEditing}
                     placeholder="+1 (555) 000-0000"
-                    className={`w-full pl-12 pr-4 py-3 bg-neutral-50 border-2 border-neutral-200 rounded-2xl transition-all ${
-                      isEditing ? 'focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-100' : 'cursor-not-allowed'
+                    className={`w-full pl-12 pr-4 py-3 bg-white/10 backdrop-blur-sm border-2 border-white/10 rounded-2xl text-white placeholder-purple-300/50 transition-all ${
+                      isEditing ? 'focus:outline-none focus:border-purple-400/50 focus:bg-white/15' : 'cursor-not-allowed opacity-60'
                     }`}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-neutral-700 mb-2">
+                <label className="block text-sm font-semibold text-purple-200 mb-2">
                   Date of Birth
                 </label>
                 <div className="relative">
-                  <Calendar size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
+                  <Calendar size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-400" />
                   <input
                     type="date"
                     value={profileData.dateOfBirth}
                     onChange={(e) => setProfileData({ ...profileData, dateOfBirth: e.target.value })}
                     disabled={!isEditing}
                     max={new Date().toISOString().split('T')[0]}
-                    className={`w-full pl-12 pr-4 py-3 bg-neutral-50 border-2 border-neutral-200 rounded-2xl transition-all ${
-                      isEditing ? 'focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-100' : 'cursor-not-allowed'
+                    className={`w-full pl-12 pr-4 py-3 bg-white/10 backdrop-blur-sm border-2 border-white/10 rounded-2xl text-white placeholder-purple-300/50 transition-all ${
+                      isEditing ? 'focus:outline-none focus:border-purple-400/50 focus:bg-white/15' : 'cursor-not-allowed opacity-60'
                     }`}
                   />
                 </div>
@@ -263,10 +271,13 @@ export const ProfileSettings: React.FC = () => {
                 <button
                   onClick={handleSave}
                   disabled={loading}
-                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold rounded-2xl hover:from-purple-700 hover:to-pink-600 disabled:opacity-50 transition-all shadow-lg"
+                  className="relative group flex-1 md:flex-none"
                 >
-                  <Save size={20} />
-                  {loading ? 'Saving...' : 'Save Changes'}
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur opacity-60 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative flex items-center justify-center gap-2 px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold rounded-2xl hover:from-purple-700 hover:to-pink-600 disabled:opacity-50 transition-all shadow-lg">
+                    <Save size={20} />
+                    {loading ? 'Saving...' : 'Save Changes'}
+                  </div>
                 </button>
               </div>
             )}
@@ -274,24 +285,27 @@ export const ProfileSettings: React.FC = () => {
         </div>
 
         {/* Account Stats Card */}
-        <div className="bg-white rounded-3xl shadow-xl p-8 border-2 border-purple-100">
-          <h3 className="text-xl font-bold text-neutral-800 mb-6">Learning Progress</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-purple-50 rounded-2xl">
-              <div className="text-3xl font-bold text-purple-600">{user?.profile?.level || 1}</div>
-              <div className="text-sm text-neutral-600 mt-1">Level</div>
-            </div>
-            <div className="text-center p-4 bg-blue-50 rounded-2xl">
-              <div className="text-3xl font-bold text-blue-600">{user?.profile?.current_xp || 0}</div>
-              <div className="text-sm text-neutral-600 mt-1">XP</div>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-2xl">
-              <div className="text-3xl font-bold text-green-600">{user?.profile?.streak_days || 0}</div>
-              <div className="text-sm text-neutral-600 mt-1">Day Streak</div>
-            </div>
-            <div className="text-center p-4 bg-orange-50 rounded-2xl">
-              <div className="text-3xl font-bold text-orange-600">{user?.profile?.total_learning_hours?.toFixed(1) || '0.0'}h</div>
-              <div className="text-sm text-neutral-600 mt-1">Total Hours</div>
+        <div className="relative group">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-3xl blur opacity-40 group-hover:opacity-60 transition-opacity duration-500" />
+          <div className="relative bg-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/10">
+            <h3 className="text-xl font-bold text-white mb-6">Learning Progress</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 bg-purple-500/20 backdrop-blur-sm border border-purple-400/30 rounded-2xl">
+                <div className="text-3xl font-bold text-purple-300">{user?.profile?.level || 1}</div>
+                <div className="text-sm text-purple-200 mt-1">Level</div>
+              </div>
+              <div className="text-center p-4 bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 rounded-2xl">
+                <div className="text-3xl font-bold text-blue-300">{user?.profile?.current_xp || 0}</div>
+                <div className="text-sm text-blue-200 mt-1">XP</div>
+              </div>
+              <div className="text-center p-4 bg-green-500/20 backdrop-blur-sm border border-green-400/30 rounded-2xl">
+                <div className="text-3xl font-bold text-green-300">{user?.profile?.streak_days || 0}</div>
+                <div className="text-sm text-green-200 mt-1">Day Streak</div>
+              </div>
+              <div className="text-center p-4 bg-orange-500/20 backdrop-blur-sm border border-orange-400/30 rounded-2xl">
+                <div className="text-3xl font-bold text-orange-300">{user?.profile?.total_learning_hours?.toFixed(1) || '0.0'}h</div>
+                <div className="text-sm text-orange-200 mt-1">Total Hours</div>
+              </div>
             </div>
           </div>
         </div>
