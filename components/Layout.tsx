@@ -19,12 +19,27 @@ export const Layout: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-row h-screen bg-white overflow-hidden font-sans antialiased">
+    <div className="flex flex-row h-screen bg-gradient-to-br from-purple-950 via-neutral-900 to-black overflow-hidden font-sans antialiased relative">
+      {/* Animated background particles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+        {[...Array(30)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full animate-pulse"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2 + Math.random() * 3}s`,
+            }}
+          />
+        ))}
+      </div>
 
       {/* Mobile Hamburger Menu Button */}
       <button
         onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-        className="md:hidden fixed top-4 left-4 z-50 p-3 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl shadow-lg"
+        className="md:hidden fixed top-4 left-4 z-50 p-3 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl shadow-lg shadow-purple-500/50"
       >
         {isMobileSidebarOpen ? (
           <X size={24} className="text-white" />
@@ -38,7 +53,7 @@ export const Layout: React.FC = () => {
         fixed md:relative
         ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         transition-transform duration-300 ease-in-out
-        flex flex-col w-72 bg-gradient-to-b from-neutral-900 via-purple-950 to-neutral-900 text-neutral-300 h-full shadow-2xl z-40 border-r border-purple-900/20
+        flex flex-col w-72 bg-gradient-to-b from-neutral-900/95 via-purple-950/95 to-neutral-900/95 backdrop-blur-xl text-neutral-300 h-full shadow-2xl z-40 border-r border-purple-500/20
       `}>
 
         {/* Logo */}
@@ -146,7 +161,7 @@ export const Layout: React.FC = () => {
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto relative bg-gradient-to-br from-purple-50/30 via-pink-50/20 to-white">
+      <main className="flex-1 overflow-y-auto relative bg-transparent">
         <Outlet />
 
         {/* Floating Novie AI Button - Appears on all pages except /novie and /feed */}
