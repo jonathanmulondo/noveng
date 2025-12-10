@@ -867,12 +867,19 @@ void loop() {
             const isHovered = hoveredWire === wire.id;
 
             return (
-              <g
-                key={wire.id}
-                onMouseEnter={() => setHoveredWire(wire.id)}
-                onMouseLeave={() => setHoveredWire(null)}
-                className="cursor-pointer"
-              >
+              <g key={wire.id}>
+                {/* Invisible wider line for easier hovering */}
+                <line
+                  x1={start.x} y1={start.y}
+                  x2={end.x} y2={end.y}
+                  stroke="transparent"
+                  strokeWidth="20"
+                  strokeLinecap="round"
+                  onMouseEnter={() => setHoveredWire(wire.id)}
+                  onMouseLeave={() => setHoveredWire(null)}
+                  className="cursor-pointer"
+                  style={{ pointerEvents: 'stroke' }}
+                />
                 {/* Wire glow */}
                 <line
                   x1={start.x} y1={start.y}
@@ -882,6 +889,7 @@ void loop() {
                   strokeLinecap="round"
                   opacity="0.3"
                   filter="url(#glow)"
+                  className="pointer-events-none"
                 />
                 {/* Actual wire */}
                 <line
@@ -890,13 +898,25 @@ void loop() {
                   stroke={simState === 'running' ? '#22c55e' : wireColor}
                   strokeWidth={isHovered ? "6" : "4"}
                   strokeLinecap="round"
-                  className={simState === 'running' ? 'animate-pulse' : ''}
+                  className={`pointer-events-none ${simState === 'running' ? 'animate-pulse' : ''}`}
                 />
                 {/* Delete button on hover */}
                 {isHovered && (
-                  <g transform={`translate(${(start.x + end.x) / 2}, ${(start.y + end.y) / 2})`}>
-                    <circle r="12" fill="#ef4444" opacity="0.9" onClick={(e) => { e.stopPropagation(); deleteWire(wire.id); }} className="cursor-pointer" />
-                    <text y="5" textAnchor="middle" fill="white" fontSize="16" fontWeight="bold" className="pointer-events-none select-none">×</text>
+                  <g
+                    transform={`translate(${(start.x + end.x) / 2}, ${(start.y + end.y) / 2})`}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      deleteWire(wire.id);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    {/* Larger invisible clickable area */}
+                    <circle r="18" fill="transparent" className="cursor-pointer" />
+                    {/* Visible delete button */}
+                    <circle r="14" fill="#ef4444" opacity="0.95" />
+                    <circle r="14" fill="#ef4444" opacity="0.3" filter="url(#glow)" />
+                    <text y="5" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold" className="pointer-events-none select-none">×</text>
                   </g>
                 )}
               </g>
