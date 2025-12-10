@@ -311,5 +311,6 @@ export const ProfileSettings: React.FC = () => {
         </div>
       </div>
     </div>
+    </div>
   );
 };
