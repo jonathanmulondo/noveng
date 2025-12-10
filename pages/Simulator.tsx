@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { ComponentType, SimComponent, Wire, Pin, CircuitState } from '../types';
 import { COMPONENT_SPECS } from '../constants';
-import { Trash2, Play, RefreshCw, ZapOff, Save, Download, Upload, X, RotateCw } from 'lucide-react';
+import { Trash2, Play, RefreshCw, ZapOff, Save, Download, Upload, X, RotateCw, Terminal, Code, Cpu, ChevronDown, ChevronUp, Copy } from 'lucide-react';
 
 export const Simulator: React.FC = () => {
   const [components, setComponents] = useState<SimComponent[]>([]);
@@ -13,6 +13,29 @@ export const Simulator: React.FC = () => {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [simState, setSimState] = useState<'idle' | 'running' | 'error'>('idle');
   const [validationMsg, setValidationMsg] = useState('');
+
+  // Phase 3: Simulation Engine state
+  const [showSerialMonitor, setShowSerialMonitor] = useState(false);
+  const [showCodeEditor, setShowCodeEditor] = useState(false);
+  const [showPinStates, setShowPinStates] = useState(true);
+  const [serialOutput, setSerialOutput] = useState<string[]>([]);
+  const [arduinoCode, setArduinoCode] = useState(`void setup() {
+  Serial.begin(9600);
+  pinMode(13, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(13, HIGH);
+  Serial.println("LED ON");
+  delay(1000);
+  digitalWrite(13, LOW);
+  Serial.println("LED OFF");
+  delay(1000);
+}`);
+  const [pinStates, setPinStates] = useState<Record<string, { mode: 'INPUT' | 'OUTPUT' | 'PWM', value: number }>>({
+    '13': { mode: 'OUTPUT', value: 0 },
+    'A0': { mode: 'INPUT', value: 512 },
+  });
 
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -318,10 +341,40 @@ export const Simulator: React.FC = () => {
       if (powered && grounded && hasResistor) {
         setSimState('running');
         setValidationMsg("✅ Perfect! Your LED circuit is complete with resistor protection!");
+
+        // Add serial output
+        setSerialOutput(prev => [
+          ...prev,
+          `[${new Date().toLocaleTimeString()}] Sketch uploaded successfully`,
+          `[${new Date().toLocaleTimeString()}] Serial Monitor initialized at 9600 baud`,
+          `[${new Date().toLocaleTimeString()}] LED connected to pin 13`,
+          `[${new Date().toLocaleTimeString()}] LED ON`,
+        ]);
+
+        // Update pin states
+        setPinStates(prev => ({
+          ...prev,
+          '13': { mode: 'OUTPUT', value: 1 }
+        }));
+
         return;
       } else if (powered && grounded) {
         setSimState('running');
         setValidationMsg("✅ LED circuit working (but add a resistor for safety!)");
+
+        // Add serial output
+        setSerialOutput(prev => [
+          ...prev,
+          `[${new Date().toLocaleTimeString()}] Sketch uploaded successfully`,
+          `[${new Date().toLocaleTimeString()}] LED ON`,
+        ]);
+
+        // Update pin states
+        setPinStates(prev => ({
+          ...prev,
+          '13': { mode: 'OUTPUT', value: 1 }
+        }));
+
         return;
       } else {
         setSimState('error');
@@ -339,6 +392,20 @@ export const Simulator: React.FC = () => {
       if (buttonWires.length >= 2) {
         setSimState('running');
         setValidationMsg("✅ Button circuit ready! Click button to toggle input.");
+
+        // Add serial output
+        setSerialOutput(prev => [
+          ...prev,
+          `[${new Date().toLocaleTimeString()}] Button connected to pin 2`,
+          `[${new Date().toLocaleTimeString()}] Button state: ${button.state?.isPressed ? 'PRESSED' : 'RELEASED'}`,
+        ]);
+
+        // Update pin states
+        setPinStates(prev => ({
+          ...prev,
+          '2': { mode: 'INPUT', value: button.state?.isPressed ? 1 : 0 }
+        }));
+
         return;
       } else {
         setSimState('error');
@@ -465,6 +532,24 @@ export const Simulator: React.FC = () => {
       if (potWires.length >= 3) {
         setSimState('running');
         setValidationMsg("✅ Potentiometer connected! Reading analog value...");
+
+        // Calculate analog value from resistance
+        const analogValue = Math.round((pot.state?.resistance || 5000) / 10000 * 1023);
+
+        // Add serial output
+        setSerialOutput(prev => [
+          ...prev,
+          `[${new Date().toLocaleTimeString()}] Potentiometer connected to A0`,
+          `[${new Date().toLocaleTimeString()}] Analog reading: ${analogValue} (${pot.state?.angle || 135}°)`,
+          `[${new Date().toLocaleTimeString()}] Resistance: ${pot.state?.resistance || 5000}Ω`,
+        ]);
+
+        // Update pin states
+        setPinStates(prev => ({
+          ...prev,
+          'A0': { mode: 'INPUT', value: analogValue }
+        }));
+
         return;
       } else {
         setSimState('error');
@@ -1126,7 +1211,406 @@ export const Simulator: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Pin State Visualization - Floating Panel */}
+        {showPinStates && components.some(c => c.type === ComponentType.ARDUINO_UNO) && (
+          <div className="absolute top-4 right-4 w-80 max-h-96 overflow-y-auto">
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur opacity-50" />
+              <div className="relative bg-neutral-900/95 backdrop-blur-xl rounded-2xl border border-purple-500/20 shadow-2xl">
+                {/* Header */}
+                <div className="flex items-center justify-between p-4 border-b border-purple-500/20">
+                  <div className="flex items-center gap-2">
+                    <Cpu size={20} className="text-purple-400" />
+                    <h3 className="font-bold text-white">Pin States</h3>
+                  </div>
+                  <button
+                    onClick={() => setShowPinStates(false)}
+                    className="text-purple-300 hover:text-white transition-colors"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {/* Pin Grid */}
+                <div className="p-4 space-y-3">
+                  {/* Digital Pins */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-purple-300 mb-2">Digital Pins</h4>
+                    <div className="grid grid-cols-7 gap-2">
+                      {[...Array(14)].map((_, i) => {
+                        const pinState = pinStates[i.toString()];
+                        const isHigh = pinState?.value === 1;
+                        const isPWM = [3, 5, 6, 9, 10, 11].includes(i);
+                        return (
+                          <div key={i} className="text-center">
+                            <div className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center text-xs font-bold transition-all ${
+                              isHigh
+                                ? 'bg-green-500/20 border-green-400 text-green-300'
+                                : 'bg-white/5 border-white/10 text-purple-300'
+                            }`}>
+                              {i}{isPWM && '~'}
+                            </div>
+                            <div className="text-[10px] mt-1 text-purple-300/70">
+                              {pinState?.mode || 'N/A'}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Analog Pins */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-purple-300 mb-2">Analog Pins</h4>
+                    <div className="space-y-2">
+                      {[...Array(6)].map((_, i) => {
+                        const pinName = `A${i}`;
+                        const pinState = pinStates[pinName];
+                        const value = pinState?.value || 0;
+                        const percentage = (value / 1023) * 100;
+                        return (
+                          <div key={pinName} className="flex items-center gap-2">
+                            <div className="w-8 text-xs font-bold text-purple-300">{pinName}</div>
+                            <div className="flex-1 h-6 bg-white/5 rounded-lg border border-white/10 overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-300"
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                            <div className="w-12 text-xs font-mono text-cyan-300">{value}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Code Editor Panel - Floating Side Panel */}
+        {showCodeEditor && (
+          <div className="absolute top-4 left-4 w-96 max-h-[600px] flex flex-col">
+            <div className="relative group flex-1 flex flex-col">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur opacity-50" />
+              <div className="relative bg-neutral-900/95 backdrop-blur-xl rounded-2xl border border-purple-500/20 shadow-2xl flex flex-col h-full">
+                {/* Header */}
+                <div className="flex items-center justify-between p-4 border-b border-purple-500/20">
+                  <div className="flex items-center gap-2">
+                    <Code size={20} className="text-purple-400" />
+                    <h3 className="font-bold text-white">Arduino Code</h3>
+                  </div>
+                  <button
+                    onClick={() => setShowCodeEditor(false)}
+                    className="text-purple-300 hover:text-white transition-colors"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {/* Code Editor */}
+                <div className="flex-1 overflow-hidden">
+                  <textarea
+                    value={arduinoCode}
+                    onChange={(e) => setArduinoCode(e.target.value)}
+                    className="w-full h-full p-4 bg-black/50 text-green-300 font-mono text-sm resize-none focus:outline-none"
+                    style={{ lineHeight: '1.5' }}
+                    spellCheck={false}
+                  />
+                </div>
+
+                {/* Footer Actions */}
+                <div className="p-4 border-t border-purple-500/20 flex gap-2">
+                  <button
+                    onClick={() => {
+                      // Upload/compile code logic
+                      setSerialOutput(prev => [...prev, `[${new Date().toLocaleTimeString()}] Compiling sketch...`]);
+                      setTimeout(() => {
+                        setSerialOutput(prev => [...prev, `[${new Date().toLocaleTimeString()}] Upload complete!`]);
+                      }, 500);
+                    }}
+                    className="relative group flex-1"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl blur opacity-60 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative bg-gradient-to-r from-purple-600 to-pink-500 text-white py-2 rounded-xl font-bold flex items-center justify-center gap-2 text-sm">
+                      <Upload size={16} /> Upload
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setArduinoCode(`void setup() {\n  Serial.begin(9600);\n  pinMode(13, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(13, HIGH);\n  Serial.println("LED ON");\n  delay(1000);\n  digitalWrite(13, LOW);\n  Serial.println("LED OFF");\n  delay(1000);\n}`)}
+                    className="bg-white/5 border border-white/10 hover:border-purple-400/50 text-purple-300 px-4 py-2 rounded-xl text-sm font-medium transition-all"
+                  >
+                    Reset
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Serial Monitor - Bottom Collapsible Panel */}
+      <div className={`absolute bottom-0 left-0 right-0 transition-all duration-300 z-20 ${
+        showSerialMonitor ? 'translate-y-0' : 'translate-y-full'
+      }`}>
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-t from-purple-500/20 to-transparent blur" />
+          <div className="relative bg-neutral-900/98 backdrop-blur-xl border-t border-purple-500/30 shadow-2xl">
+            {/* Toggle Button */}
+            <button
+              onClick={() => setShowSerialMonitor(!showSerialMonitor)}
+              className="absolute -top-10 right-4 bg-neutral-900/95 backdrop-blur-xl border border-purple-500/30 rounded-t-xl px-4 py-2 flex items-center gap-2 text-purple-300 hover:text-white transition-colors shadow-lg"
+            >
+              <Terminal size={18} />
+              <span className="text-sm font-medium">Serial Monitor</span>
+              {showSerialMonitor ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+            </button>
+
+            {/* Serial Monitor Content */}
+            <div className="p-4 max-h-64 overflow-y-auto">
+              <div className="flex items-center justify-between mb-3 pb-3 border-b border-purple-500/20">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                  <span className="text-sm font-semibold text-white">COM3 - 9600 baud</span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      const text = serialOutput.join('\n');
+                      navigator.clipboard.writeText(text);
+                    }}
+                    className="bg-white/5 border border-white/10 hover:border-purple-400/50 text-purple-300 px-3 py-1 rounded-lg text-xs font-medium flex items-center gap-1 transition-all"
+                  >
+                    <Copy size={12} /> Copy
+                  </button>
+                  <button
+                    onClick={() => setSerialOutput([])}
+                    className="bg-red-500/20 border border-red-400/30 hover:border-red-400/50 text-red-300 px-3 py-1 rounded-lg text-xs font-medium transition-all"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+
+              {/* Serial Output */}
+              <div className="font-mono text-sm space-y-1">
+                {serialOutput.length === 0 ? (
+                  <div className="text-purple-300/50 italic">No serial output yet...</div>
+                ) : (
+                  serialOutput.map((line, i) => (
+                    <div key={i} className="text-green-300">
+                      {line}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Toolbar for toggling panels */}
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-30">
+        <button
+          onClick={() => setShowCodeEditor(!showCodeEditor)}
+          className={`relative group ${showCodeEditor ? 'opacity-100' : 'opacity-70'}`}
+        >
+          <div className="absolute inset-0 bg-purple-500 rounded-xl blur opacity-0 group-hover:opacity-40 transition-opacity" />
+          <div className={`relative px-4 py-2 backdrop-blur-sm border rounded-xl flex items-center gap-2 font-medium text-sm transition-all ${
+            showCodeEditor
+              ? 'bg-purple-500/30 border-purple-400/50 text-purple-200'
+              : 'bg-white/5 border-white/10 text-purple-300 hover:border-purple-400/30'
+          }`}>
+            <Code size={16} />
+            <span className="hidden md:inline">Code Editor</span>
+          </div>
+        </button>
+
+        <button
+          onClick={() => setShowSerialMonitor(!showSerialMonitor)}
+          className={`relative group ${showSerialMonitor ? 'opacity-100' : 'opacity-70'}`}
+        >
+          <div className="absolute inset-0 bg-purple-500 rounded-xl blur opacity-0 group-hover:opacity-40 transition-opacity" />
+          <div className={`relative px-4 py-2 backdrop-blur-sm border rounded-xl flex items-center gap-2 font-medium text-sm transition-all ${
+            showSerialMonitor
+              ? 'bg-purple-500/30 border-purple-400/50 text-purple-200'
+              : 'bg-white/5 border-white/10 text-purple-300 hover:border-purple-400/30'
+          }`}>
+            <Terminal size={16} />
+            <span className="hidden md:inline">Serial Monitor</span>
+          </div>
+        </button>
+
+        <button
+          onClick={() => setShowPinStates(!showPinStates)}
+          className={`relative group ${showPinStates ? 'opacity-100' : 'opacity-70'}`}
+        >
+          <div className="absolute inset-0 bg-purple-500 rounded-xl blur opacity-0 group-hover:opacity-40 transition-opacity" />
+          <div className={`relative px-4 py-2 backdrop-blur-sm border rounded-xl flex items-center gap-2 font-medium text-sm transition-all ${
+            showPinStates
+              ? 'bg-purple-500/30 border-purple-400/50 text-purple-200'
+              : 'bg-white/5 border-white/10 text-purple-300 hover:border-purple-400/30'
+          }`}>
+            <Cpu size={16} />
+            <span className="hidden md:inline">Pin States</span>
+          </div>
+        </button>
+      </div>
+
+      {/* Interactive Component Controls - Potentiometer */}
+      {selectedComp && components.find(c => c.id === selectedComp)?.type === ComponentType.POTENTIOMETER && (
+        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 w-80">
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur opacity-50" />
+            <div className="relative bg-neutral-900/95 backdrop-blur-xl rounded-2xl border border-purple-500/20 shadow-2xl p-4">
+              <h3 className="font-bold text-white mb-3 flex items-center gap-2">
+                <RotateCw size={18} className="text-purple-400" />
+                Potentiometer Control
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-purple-300">Angle</span>
+                    <span className="text-white font-mono">{components.find(c => c.id === selectedComp)?.state?.angle || 0}°</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="270"
+                    value={components.find(c => c.id === selectedComp)?.state?.angle || 0}
+                    onChange={(e) => {
+                      const angle = parseInt(e.target.value);
+                      const resistance = Math.round((angle / 270) * 10000);
+                      setComponents(prev => prev.map(c =>
+                        c.id === selectedComp
+                          ? { ...c, state: { ...c.state, angle, resistance } }
+                          : c
+                      ));
+                    }}
+                    className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer slider"
+                    style={{
+                      background: `linear-gradient(to right, #a855f7 0%, #ec4899 ${((components.find(c => c.id === selectedComp)?.state?.angle || 0) / 270) * 100}%, rgba(255,255,255,0.1) ${((components.find(c => c.id === selectedComp)?.state?.angle || 0) / 270) * 100}%)`
+                    }}
+                  />
+                </div>
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-purple-300">Resistance</span>
+                    <span className="text-white font-mono">{components.find(c => c.id === selectedComp)?.state?.resistance || 0}Ω</span>
+                  </div>
+                  <div className="text-xs text-purple-300/70">{((components.find(c => c.id === selectedComp)?.state?.resistance || 0) / 1000).toFixed(2)}kΩ</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive Component Controls - RGB LED */}
+      {selectedComp && components.find(c => c.id === selectedComp)?.type === ComponentType.RGB_LED && (
+        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 w-80">
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur opacity-50" />
+            <div className="relative bg-neutral-900/95 backdrop-blur-xl rounded-2xl border border-purple-500/20 shadow-2xl p-4">
+              <h3 className="font-bold text-white mb-3">RGB LED Control</h3>
+              <div className="space-y-3">
+                {/* Red Channel */}
+                <div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-red-400">Red</span>
+                    <span className="text-white font-mono">{components.find(c => c.id === selectedComp)?.state?.red || 0}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="255"
+                    value={components.find(c => c.id === selectedComp)?.state?.red || 0}
+                    onChange={(e) => {
+                      setComponents(prev => prev.map(c =>
+                        c.id === selectedComp
+                          ? { ...c, state: { ...c.state, red: parseInt(e.target.value) } }
+                          : c
+                      ));
+                    }}
+                    className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #ef4444 0%, #ef4444 ${((components.find(c => c.id === selectedComp)?.state?.red || 0) / 255) * 100}%, rgba(255,255,255,0.1) ${((components.find(c => c.id === selectedComp)?.state?.red || 0) / 255) * 100}%)`
+                    }}
+                  />
+                </div>
+
+                {/* Green Channel */}
+                <div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-green-400">Green</span>
+                    <span className="text-white font-mono">{components.find(c => c.id === selectedComp)?.state?.green || 0}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="255"
+                    value={components.find(c => c.id === selectedComp)?.state?.green || 0}
+                    onChange={(e) => {
+                      setComponents(prev => prev.map(c =>
+                        c.id === selectedComp
+                          ? { ...c, state: { ...c.state, green: parseInt(e.target.value) } }
+                          : c
+                      ));
+                    }}
+                    className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #22c55e 0%, #22c55e ${((components.find(c => c.id === selectedComp)?.state?.green || 0) / 255) * 100}%, rgba(255,255,255,0.1) ${((components.find(c => c.id === selectedComp)?.state?.green || 0) / 255) * 100}%)`
+                    }}
+                  />
+                </div>
+
+                {/* Blue Channel */}
+                <div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-blue-400">Blue</span>
+                    <span className="text-white font-mono">{components.find(c => c.id === selectedComp)?.state?.blue || 0}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="255"
+                    value={components.find(c => c.id === selectedComp)?.state?.blue || 0}
+                    onChange={(e) => {
+                      setComponents(prev => prev.map(c =>
+                        c.id === selectedComp
+                          ? { ...c, state: { ...c.state, blue: parseInt(e.target.value) } }
+                          : c
+                      ));
+                    }}
+                    className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((components.find(c => c.id === selectedComp)?.state?.blue || 0) / 255) * 100}%, rgba(255,255,255,0.1) ${((components.find(c => c.id === selectedComp)?.state?.blue || 0) / 255) * 100}%)`
+                    }}
+                  />
+                </div>
+
+                {/* Color Preview */}
+                <div className="mt-4 p-3 rounded-xl border border-white/10 flex items-center gap-3">
+                  <div
+                    className="w-12 h-12 rounded-lg border-2 border-white/20"
+                    style={{
+                      backgroundColor: `rgb(${components.find(c => c.id === selectedComp)?.state?.red || 0}, ${components.find(c => c.id === selectedComp)?.state?.green || 0}, ${components.find(c => c.id === selectedComp)?.state?.blue || 0})`
+                    }}
+                  />
+                  <div className="text-xs text-purple-300">
+                    <div>Preview</div>
+                    <div className="font-mono text-white">
+                      rgb({components.find(c => c.id === selectedComp)?.state?.red || 0}, {components.find(c => c.id === selectedComp)?.state?.green || 0}, {components.find(c => c.id === selectedComp)?.state?.blue || 0})
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
