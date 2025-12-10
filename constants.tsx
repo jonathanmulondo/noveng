@@ -71,6 +71,58 @@ export const COMPONENT_SPECS: Record<ComponentType, { width: number; height: num
       { id: 'power', name: 'VCC', x: 45, y: 45, type: 'power' },
       { id: 'ground', name: 'GND', x: 65, y: 45, type: 'ground' },
     ]
+  },
+  [ComponentType.POTENTIOMETER]: {
+    width: 70,
+    height: 80,
+    label: "Potentiometer",
+    pins: [
+      { id: 'pin1', name: 'VCC', x: 15, y: 70, type: 'power' },
+      { id: 'wiper', name: 'OUT', x: 35, y: 70, type: 'analog' },
+      { id: 'pin3', name: 'GND', x: 55, y: 70, type: 'ground' },
+    ]
+  },
+  [ComponentType.LCD_16X2]: {
+    width: 160,
+    height: 80,
+    label: "LCD 16x2",
+    pins: [
+      { id: 'vss', name: 'VSS', x: 10, y: 70, type: 'ground' },
+      { id: 'vdd', name: 'VDD', x: 20, y: 70, type: 'power' },
+      { id: 'rs', name: 'RS', x: 40, y: 70, type: 'digital' },
+      { id: 'rw', name: 'RW', x: 50, y: 70, type: 'digital' },
+      { id: 'e', name: 'E', x: 60, y: 70, type: 'digital' },
+      { id: 'd4', name: 'D4', x: 80, y: 70, type: 'digital' },
+      { id: 'd5', name: 'D5', x: 90, y: 70, type: 'digital' },
+      { id: 'd6', name: 'D6', x: 100, y: 70, type: 'digital' },
+      { id: 'd7', name: 'D7', x: 110, y: 70, type: 'digital' },
+    ]
+  },
+  [ComponentType.BREADBOARD]: {
+    width: 300,
+    height: 200,
+    label: "Breadboard",
+    pins: []
+  },
+  [ComponentType.BUZZER]: {
+    width: 50,
+    height: 60,
+    label: "Buzzer",
+    pins: [
+      { id: 'positive', name: '+', x: 15, y: 50, type: 'digital' },
+      { id: 'negative', name: '-', x: 35, y: 50, type: 'ground' },
+    ]
+  },
+  [ComponentType.RGB_LED]: {
+    width: 50,
+    height: 70,
+    label: "RGB LED",
+    pins: [
+      { id: 'red', name: 'R', x: 10, y: 65, type: 'digital' },
+      { id: 'cathode', name: '-', x: 20, y: 65, type: 'ground' },
+      { id: 'green', name: 'G', x: 30, y: 65, type: 'digital' },
+      { id: 'blue', name: 'B', x: 40, y: 65, type: 'digital' },
+    ]
   }
 };
 

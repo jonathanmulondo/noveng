@@ -77,7 +77,12 @@ export enum ComponentType {
   BATTERY = 'BATTERY',
   BUTTON = 'BUTTON',
   ULTRASONIC = 'ULTRASONIC',
-  SERVO = 'SERVO'
+  SERVO = 'SERVO',
+  POTENTIOMETER = 'POTENTIOMETER',
+  LCD_16X2 = 'LCD_16X2',
+  BREADBOARD = 'BREADBOARD',
+  BUZZER = 'BUZZER',
+  RGB_LED = 'RGB_LED'
 }
 
 export interface Pin {
@@ -92,11 +97,21 @@ export interface ComponentState {
   // Button
   isPressed?: boolean;
   // Potentiometer
-  angle?: number; // 0-270
+  angle?: number; // 0-270 degrees
+  resistance?: number; // 0-10000 ohms
   // Sensor values
   sensorValue?: number;
   // LED
   brightness?: number; // 0-255
+  // RGB LED
+  red?: number; // 0-255
+  green?: number; // 0-255
+  blue?: number; // 0-255
+  // Buzzer
+  isActive?: boolean;
+  frequency?: number; // Hz
+  // LCD Display
+  displayText?: string[];
 }
 
 export interface SimComponent {

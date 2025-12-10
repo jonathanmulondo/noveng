@@ -65,12 +65,27 @@ export const Simulator: React.FC = () => {
   const addComponent = (type: ComponentType) => {
     const id = `${type}_${Date.now()}`;
     const offset = components.length * 20;
+
+    // Initialize component state based on type
+    let initialState = undefined;
+    if (type === ComponentType.BUTTON) {
+      initialState = { isPressed: false };
+    } else if (type === ComponentType.POTENTIOMETER) {
+      initialState = { angle: 135, resistance: 5000 }; // Middle position
+    } else if (type === ComponentType.RGB_LED) {
+      initialState = { red: 0, green: 0, blue: 0 };
+    } else if (type === ComponentType.BUZZER) {
+      initialState = { isActive: false, frequency: 0 };
+    } else if (type === ComponentType.LCD_16X2) {
+      initialState = { displayText: ['Hello World!', 'LCD 16x2'] };
+    }
+
     setComponents(prev => [...prev, {
       id,
       type,
       x: 100 + offset,
       y: 100 + offset,
-      state: type === ComponentType.BUTTON ? { isPressed: false } : undefined
+      state: initialState
     }]);
   };
 
@@ -378,6 +393,82 @@ export const Simulator: React.FC = () => {
       } else {
         setSimState('error');
         setValidationMsg("⚠️ HC-SR04 needs 4 connections: VCC, TRIG, ECHO, GND.");
+        return;
+      }
+    }
+
+    // Check for buzzer circuit
+    const buzzers = components.filter(c => c.type === ComponentType.BUZZER);
+    if (buzzers.length > 0) {
+      const buzzer = buzzers[0];
+      const buzzerWires = wires.filter(w => w.fromCompId === buzzer.id || w.toCompId === buzzer.id);
+
+      if (buzzerWires.length >= 2) {
+        // Set buzzer to active
+        setComponents(prev => prev.map(c =>
+          c.id === buzzer.id ? { ...c, state: { ...c.state, isActive: true } } : c
+        ));
+        setSimState('running');
+        setValidationMsg("✅ Buzzer connected! Making sound...");
+        return;
+      } else {
+        setSimState('error');
+        setValidationMsg("⚠️ Connect buzzer (+) to digital pin and (-) to GND.");
+        return;
+      }
+    }
+
+    // Check for RGB LED circuit
+    const rgbLeds = components.filter(c => c.type === ComponentType.RGB_LED);
+    if (rgbLeds.length > 0) {
+      const rgbLed = rgbLeds[0];
+      const rgbWires = wires.filter(w => w.fromCompId === rgbLed.id || w.toCompId === rgbLed.id);
+
+      if (rgbWires.length >= 3) {
+        // Set random RGB values for demo
+        setComponents(prev => prev.map(c =>
+          c.id === rgbLed.id ? { ...c, state: { red: 255, green: 100, blue: 200 } } : c
+        ));
+        setSimState('running');
+        setValidationMsg("✅ RGB LED circuit complete! Colors mixing...");
+        return;
+      } else {
+        setSimState('error');
+        setValidationMsg("⚠️ RGB LED needs R, G, B pins connected to PWM pins and cathode to GND.");
+        return;
+      }
+    }
+
+    // Check for LCD Display circuit
+    const lcds = components.filter(c => c.type === ComponentType.LCD_16X2);
+    if (lcds.length > 0) {
+      const lcd = lcds[0];
+      const lcdWires = wires.filter(w => w.fromCompId === lcd.id || w.toCompId === lcd.id);
+
+      if (lcdWires.length >= 6) {
+        setSimState('running');
+        setValidationMsg("✅ LCD connected! Displaying text...");
+        return;
+      } else {
+        setSimState('error');
+        setValidationMsg("⚠️ LCD needs at least 6 connections: VSS, VDD, RS, E, D4-D7.");
+        return;
+      }
+    }
+
+    // Check for Potentiometer circuit
+    const pots = components.filter(c => c.type === ComponentType.POTENTIOMETER);
+    if (pots.length > 0) {
+      const pot = pots[0];
+      const potWires = wires.filter(w => w.fromCompId === pot.id || w.toCompId === pot.id);
+
+      if (potWires.length >= 3) {
+        setSimState('running');
+        setValidationMsg("✅ Potentiometer connected! Reading analog value...");
+        return;
+      } else {
+        setSimState('error');
+        setValidationMsg("⚠️ Potentiometer needs 3 connections: VCC, OUT (to analog pin), GND.");
         return;
       }
     }
@@ -789,6 +880,181 @@ export const Simulator: React.FC = () => {
                       SERVO
                     </text>
                     <rect x="20" y="35" width="50" height="8" fill="#2c3e50" stroke="#1a252f" strokeWidth="1" rx="2" className="pointer-events-none" />
+                  </>
+                )}
+
+                {/* POTENTIOMETER */}
+                {comp.type === ComponentType.POTENTIOMETER && (
+                  <>
+                    {/* Pot body */}
+                    <rect
+                      width={spec.width}
+                      height={spec.height - 15}
+                      fill="#1f2937"
+                      stroke="#a855f7"
+                      strokeWidth="2"
+                      rx="4"
+                      onMouseDown={(e) => handleMouseDownComp(e, comp.id)}
+                      className="cursor-move"
+                      filter="url(#glow)"
+                    />
+                    {/* Dial */}
+                    <circle cx="35" cy="30" r="18" fill="#374151" stroke="#4b5563" strokeWidth="2" className="pointer-events-none" />
+                    <circle cx="35" cy="30" r="12" fill="#1f2937" stroke="#6b7280" strokeWidth="1" className="pointer-events-none" />
+                    {/* Indicator line */}
+                    <line
+                      x1="35" y1="30"
+                      x2={35 + 10 * Math.cos((comp.state?.angle || 0) * Math.PI / 180)}
+                      y2={30 + 10 * Math.sin((comp.state?.angle || 0) * Math.PI / 180)}
+                      stroke="#fbbf24"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      className="pointer-events-none"
+                    />
+                    <text x="35" y="60" textAnchor="middle" className="text-[8px] font-bold pointer-events-none select-none" fill="#a855f7">
+                      POT
+                    </text>
+                  </>
+                )}
+
+                {/* LCD 16x2 */}
+                {comp.type === ComponentType.LCD_16X2 && (
+                  <>
+                    {/* LCD body */}
+                    <rect
+                      width={spec.width}
+                      height={spec.height - 15}
+                      fill="#22c55e"
+                      stroke="#a855f7"
+                      strokeWidth="2"
+                      rx="4"
+                      onMouseDown={(e) => handleMouseDownComp(e, comp.id)}
+                      className="cursor-move"
+                      filter="url(#glow)"
+                    />
+                    {/* LCD screen */}
+                    <rect
+                      x="10" y="10" width="140" height="45"
+                      fill="#1e3a1e"
+                      stroke="#16a34a"
+                      strokeWidth="2"
+                      rx="2"
+                      className="pointer-events-none"
+                    />
+                    {/* Display text */}
+                    <text x="15" y="25" className="text-[10px] font-mono pointer-events-none select-none" fill="#22c55e">
+                      {comp.state?.displayText?.[0] || 'Hello World!'}
+                    </text>
+                    <text x="15" y="45" className="text-[10px] font-mono pointer-events-none select-none" fill="#22c55e">
+                      {comp.state?.displayText?.[1] || 'LCD 16x2'}
+                    </text>
+                  </>
+                )}
+
+                {/* BREADBOARD */}
+                {comp.type === ComponentType.BREADBOARD && (
+                  <>
+                    <rect
+                      width={spec.width}
+                      height={spec.height}
+                      fill="#f5e6d3"
+                      stroke="#a855f7"
+                      strokeWidth="2"
+                      rx="6"
+                      onMouseDown={(e) => handleMouseDownComp(e, comp.id)}
+                      className="cursor-move"
+                      filter="url(#glow)"
+                    />
+                    {/* Power rails */}
+                    <line x1="15" y1="20" x2="15" y2="180" stroke="#dc2626" strokeWidth="4" className="pointer-events-none" />
+                    <line x1="30" y1="20" x2="30" y2="180" stroke="#2563eb" strokeWidth="4" className="pointer-events-none" />
+                    <line x1="270" y1="20" x2="270" y2="180" stroke="#dc2626" strokeWidth="4" className="pointer-events-none" />
+                    <line x1="285" y1="20" x2="285" y2="180" stroke="#2563eb" strokeWidth="4" className="pointer-events-none" />
+                    {/* Holes pattern */}
+                    {[...Array(10)].map((_, row) => (
+                      <g key={row}>
+                        {[...Array(30)].map((_, col) => (
+                          <circle
+                            key={col}
+                            cx={50 + col * 7}
+                            cy={30 + row * 16}
+                            r="2"
+                            fill="#8b7355"
+                            className="pointer-events-none"
+                          />
+                        ))}
+                      </g>
+                    ))}
+                  </>
+                )}
+
+                {/* BUZZER */}
+                {comp.type === ComponentType.BUZZER && (
+                  <>
+                    {/* Buzzer body */}
+                    <rect
+                      x="5" y="10" width="40" height="35"
+                      fill="#1f2937"
+                      stroke="#a855f7"
+                      strokeWidth="2"
+                      rx="3"
+                      onMouseDown={(e) => handleMouseDownComp(e, comp.id)}
+                      className="cursor-move"
+                      filter="url(#glow)"
+                    />
+                    {/* Buzzer top */}
+                    <circle
+                      cx="25" cy="20" r="12"
+                      fill="#374151"
+                      stroke="#4b5563"
+                      strokeWidth="2"
+                      onMouseDown={(e) => handleMouseDownComp(e, comp.id)}
+                      className="cursor-move"
+                    />
+                    {/* Sound waves when active */}
+                    {comp.state?.isActive && (
+                      <>
+                        <circle cx="25" cy="20" r="16" fill="none" stroke="#fbbf24" strokeWidth="1" opacity="0.6" className="animate-ping" />
+                        <circle cx="25" cy="20" r="20" fill="none" stroke="#fbbf24" strokeWidth="1" opacity="0.4" className="animate-ping" style={{ animationDelay: '0.2s' }} />
+                      </>
+                    )}
+                    <text x="25" y="55" textAnchor="middle" className="text-[9px] font-bold pointer-events-none select-none" fill="#a855f7">
+                      BUZZER
+                    </text>
+                  </>
+                )}
+
+                {/* RGB LED */}
+                {comp.type === ComponentType.RGB_LED && (
+                  <>
+                    {/* RGB LED body */}
+                    <rect
+                      x="5" y="10" width="40" height="40"
+                      fill="#2c3e50"
+                      stroke="#1a252f"
+                      strokeWidth="2"
+                      rx="3"
+                      onMouseDown={(e) => handleMouseDownComp(e, comp.id)}
+                      className="cursor-move"
+                    />
+                    {/* LED dome with mixed color */}
+                    <ellipse
+                      cx="25" cy="20" rx="14" ry="12"
+                      fill={`rgb(${comp.state?.red || 0}, ${comp.state?.green || 0}, ${comp.state?.blue || 0})`}
+                      stroke={simState === 'running' ? '#a855f7' : '#6b7280'}
+                      strokeWidth="2"
+                      onMouseDown={(e) => handleMouseDownComp(e, comp.id)}
+                      className="cursor-move"
+                      style={{
+                        filter: simState === 'running' ? 'drop-shadow(0 0 15px rgba(168, 85, 247, 0.8))' : 'none',
+                        opacity: simState === 'running' ? 1 : 0.6
+                      }}
+                    />
+                    {/* Highlight */}
+                    <ellipse cx="22" cy="17" rx="4" ry="3" fill="rgba(255,255,255,0.3)" className="pointer-events-none" />
+                    <text x="25" y="63" textAnchor="middle" className="text-[8px] font-bold pointer-events-none select-none" fill="#a855f7">
+                      RGB LED
+                    </text>
                   </>
                 )}
 
