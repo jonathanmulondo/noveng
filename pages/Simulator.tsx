@@ -1,18 +1,56 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { ComponentType, SimComponent, Wire, Pin } from '../types';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { ComponentType, SimComponent, Wire, Pin, CircuitState } from '../types';
 import { COMPONENT_SPECS } from '../constants';
-import { Trash2, Play, RefreshCw, ZapOff, Save, Download } from 'lucide-react';
+import { Trash2, Play, RefreshCw, ZapOff, Save, Download, Upload, X, RotateCw } from 'lucide-react';
 
 export const Simulator: React.FC = () => {
   const [components, setComponents] = useState<SimComponent[]>([]);
   const [wires, setWires] = useState<Wire[]>([]);
   const [draggedComp, setDraggedComp] = useState<string | null>(null);
+  const [selectedComp, setSelectedComp] = useState<string | null>(null);
+  const [hoveredWire, setHoveredWire] = useState<string | null>(null);
   const [isDrawingWire, setIsDrawingWire] = useState<{ compId: string, pinId: string } | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [simState, setSimState] = useState<'idle' | 'running' | 'error'>('idle');
   const [validationMsg, setValidationMsg] = useState('');
 
   const svgRef = useRef<SVGSVGElement>(null);
+
+  // Auto-save to localStorage
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (components.length > 0 || wires.length > 0) {
+        saveToLocalStorage();
+      }
+    }, 30000); // Auto-save every 30 seconds
+    return () => clearInterval(interval);
+  }, [components, wires]);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    loadFromLocalStorage();
+  }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Delete selected component
+      if (e.key === 'Delete' && selectedComp) {
+        deleteComponent(selectedComp);
+      }
+      // Escape to cancel wire drawing
+      if (e.key === 'Escape' && isDrawingWire) {
+        setIsDrawingWire(null);
+      }
+      // Ctrl+S to save
+      if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        exportCircuit();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedComp, isDrawingWire]);
 
   const getSVGCoords = (e: React.MouseEvent) => {
     if (!svgRef.current) return { x: 0, y: 0 };
@@ -27,21 +65,76 @@ export const Simulator: React.FC = () => {
   const addComponent = (type: ComponentType) => {
     const id = `${type}_${Date.now()}`;
     const offset = components.length * 20;
-    setComponents(prev => [...prev, { id, type, x: 100 + offset, y: 100 + offset }]);
+    setComponents(prev => [...prev, {
+      id,
+      type,
+      x: 100 + offset,
+      y: 100 + offset,
+      state: type === ComponentType.BUTTON ? { isPressed: false } : undefined
+    }]);
+  };
+
+  const deleteComponent = (compId: string) => {
+    setComponents(prev => prev.filter(c => c.id !== compId));
+    // Remove all wires connected to this component
+    setWires(prev => prev.filter(w => w.fromCompId !== compId && w.toCompId !== compId));
+    setSelectedComp(null);
+  };
+
+  const deleteWire = (wireId: string) => {
+    setWires(prev => prev.filter(w => w.id !== wireId));
+    setHoveredWire(null);
+  };
+
+  const rotateComponent = (compId: string) => {
+    setComponents(prev => prev.map(c => {
+      if (c.id === compId) {
+        const currentRotation = c.rotation || 0;
+        const newRotation = ((currentRotation + 90) % 360) as 0 | 90 | 180 | 270;
+        return { ...c, rotation: newRotation };
+      }
+      return c;
+    }));
   };
 
   const handleMouseDownComp = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     setDraggedComp(id);
+    setSelectedComp(id);
   };
 
   const handleMouseDownPin = (e: React.MouseEvent, compId: string, pinId: string) => {
     e.stopPropagation();
     if (isDrawingWire) {
+      // Completing a wire
       if (isDrawingWire.compId === compId && isDrawingWire.pinId === pinId) {
+        // Clicked same pin, cancel
         setIsDrawingWire(null);
         return;
       }
+
+      // Validate connection
+      const fromComp = components.find(c => c.id === isDrawingWire.compId);
+      const toComp = components.find(c => c.id === compId);
+      const fromPin = fromComp && COMPONENT_SPECS[fromComp.type].pins.find(p => p.id === isDrawingWire.pinId);
+      const toPin = toComp && COMPONENT_SPECS[toComp.type].pins.find(p => p.id === pinId);
+
+      if (fromPin && toPin) {
+        // Check for invalid connections
+        if (fromPin.type === 'power' && toPin.type === 'power') {
+          setValidationMsg('⚠️ Cannot connect power to power!');
+          setSimState('error');
+          setIsDrawingWire(null);
+          return;
+        }
+        if (fromPin.type === 'ground' && toPin.type === 'ground') {
+          setValidationMsg('⚠️ Connecting ground to ground is redundant');
+          setSimState('error');
+          setIsDrawingWire(null);
+          return;
+        }
+      }
+
       const newWire: Wire = {
         id: `wire_${Date.now()}`,
         fromCompId: isDrawingWire.compId,
@@ -51,7 +144,10 @@ export const Simulator: React.FC = () => {
       };
       setWires(prev => [...prev, newWire]);
       setIsDrawingWire(null);
+      setValidationMsg('');
+      setSimState('idle');
     } else {
+      // Starting a new wire
       setIsDrawingWire({ compId, pinId });
     }
   };
@@ -64,8 +160,8 @@ export const Simulator: React.FC = () => {
       setComponents(prev => prev.map(c =>
         c.id === draggedComp ? {
           ...c,
-          x: coords.x - (COMPONENT_SPECS[c.type].width / 2),
-          y: coords.y - (COMPONENT_SPECS[c.type].height / 2)
+          x: Math.max(0, coords.x - (COMPONENT_SPECS[c.type].width / 2)),
+          y: Math.max(0, coords.y - (COMPONENT_SPECS[c.type].height / 2))
         } : c
       ));
     }
@@ -85,10 +181,76 @@ export const Simulator: React.FC = () => {
   };
 
   const clearBoard = () => {
-    setComponents([]);
-    setWires([]);
-    setSimState('idle');
-    setValidationMsg('');
+    if (components.length > 0 || wires.length > 0) {
+      if (confirm('Clear all components and wires?')) {
+        setComponents([]);
+        setWires([]);
+        setSimState('idle');
+        setValidationMsg('');
+        setSelectedComp(null);
+        localStorage.removeItem('noveng_circuit');
+      }
+    }
+  };
+
+  const saveToLocalStorage = () => {
+    const circuit: CircuitState = {
+      components,
+      wires,
+      version: '1.0',
+      createdAt: new Date().toISOString()
+    };
+    localStorage.setItem('noveng_circuit', JSON.stringify(circuit));
+  };
+
+  const loadFromLocalStorage = () => {
+    const saved = localStorage.getItem('noveng_circuit');
+    if (saved) {
+      try {
+        const circuit: CircuitState = JSON.parse(saved);
+        setComponents(circuit.components);
+        setWires(circuit.wires);
+      } catch (error) {
+        console.error('Failed to load circuit:', error);
+      }
+    }
+  };
+
+  const exportCircuit = () => {
+    const circuit: CircuitState = {
+      components,
+      wires,
+      version: '1.0',
+      createdAt: new Date().toISOString(),
+      name: 'My Circuit'
+    };
+    const blob = new Blob([JSON.stringify(circuit, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `circuit_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importCircuit = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const circuit: CircuitState = JSON.parse(event.target?.result as string);
+          setComponents(circuit.components);
+          setWires(circuit.wires);
+          setValidationMsg('✅ Circuit loaded successfully!');
+          setSimState('idle');
+        } catch (error) {
+          setValidationMsg('⚠️ Failed to load circuit file');
+          setSimState('error');
+        }
+      };
+      reader.readAsText(file);
+    }
   };
 
   const runSimulation = () => {
@@ -100,13 +262,22 @@ export const Simulator: React.FC = () => {
       return;
     }
 
-    // Check for LED circuit
+    // Check for LED circuit with resistor
     const leds = components.filter(c => c.type === ComponentType.LED);
     if (leds.length > 0) {
-      let powered = false;
-      let grounded = false;
       const led = leds[0];
       const connectedWires = wires.filter(w => w.fromCompId === led.id || w.toCompId === led.id);
+
+      // Check if LED is in a circuit with a resistor
+      const resistors = components.filter(c => c.type === ComponentType.RESISTOR);
+      const hasResistor = resistors.some(resistor => {
+        return wires.some(w =>
+          (w.fromCompId === resistor.id || w.toCompId === resistor.id)
+        );
+      });
+
+      let powered = false;
+      let grounded = false;
 
       connectedWires.forEach(w => {
         const pinOnLed = w.fromCompId === led.id ? w.fromPinId : w.toPinId;
@@ -123,9 +294,19 @@ export const Simulator: React.FC = () => {
         }
       });
 
-      if (powered && grounded) {
+      if (!hasResistor && powered && grounded) {
+        setSimState('error');
+        setValidationMsg("⚠️ Add a resistor to protect your LED! LEDs need current-limiting resistors.");
+        return;
+      }
+
+      if (powered && grounded && hasResistor) {
         setSimState('running');
-        setValidationMsg("✅ Perfect! Your LED circuit is complete and glowing!");
+        setValidationMsg("✅ Perfect! Your LED circuit is complete with resistor protection!");
+        return;
+      } else if (powered && grounded) {
+        setSimState('running');
+        setValidationMsg("✅ LED circuit working (but add a resistor for safety!)");
         return;
       } else {
         setSimState('error');
@@ -142,7 +323,7 @@ export const Simulator: React.FC = () => {
 
       if (buttonWires.length >= 2) {
         setSimState('running');
-        setValidationMsg("✅ Button circuit ready! Press to read digital input.");
+        setValidationMsg("✅ Button circuit ready! Click button to toggle input.");
         return;
       } else {
         setSimState('error');
@@ -192,7 +373,7 @@ export const Simulator: React.FC = () => {
 
       if (sensorWires.length >= 4) {
         setSimState('running');
-        setValidationMsg("✅ HC-SR04 connected! Ready to measure distance.");
+        setValidationMsg("✅ HC-SR04 connected! Measuring distance...");
         return;
       } else {
         setSimState('error');
@@ -205,29 +386,56 @@ export const Simulator: React.FC = () => {
     setValidationMsg("⚠️ Add components to your breadboard to start testing!");
   };
 
-  return (
-    <div className="h-full flex flex-col md:flex-row overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-white">
+  const toggleButton = (compId: string) => {
+    setComponents(prev => prev.map(c => {
+      if (c.id === compId && c.type === ComponentType.BUTTON) {
+        return {
+          ...c,
+          state: { ...c.state, isPressed: !c.state?.isPressed }
+        };
+      }
+      return c;
+    }));
+  };
 
-      {/* Component Palette - Purple Theme */}
-      <div className="w-full md:w-64 bg-white border-r border-purple-100 p-4 md:p-6 flex flex-col gap-4 md:gap-6 shadow-xl z-10 pt-16 md:pt-6">
+  return (
+    <div className="h-screen flex flex-col md:flex-row overflow-hidden bg-gradient-to-br from-purple-950 via-neutral-900 to-black relative">
+      {/* Animated background particles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-10">
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full animate-pulse"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2 + Math.random() * 3}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Component Palette - Futuristic Dark Theme */}
+      <div className="relative w-full md:w-72 bg-gradient-to-b from-neutral-900/95 via-purple-950/95 to-neutral-900/95 backdrop-blur-xl border-r border-purple-500/20 p-4 md:p-6 flex flex-col gap-4 md:gap-6 shadow-2xl z-10 pt-16 md:pt-6">
         <div>
-          <h2 className="font-display text-lg md:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500 mb-1 md:mb-2">
+          <h2 className="font-display text-xl md:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-2">
             Components
           </h2>
-          <p className="text-xs md:text-sm text-neutral-500">Click to add</p>
+          <p className="text-sm text-purple-300">Click to add to canvas</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-1 gap-2 md:gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-1 gap-3">
           {Object.keys(COMPONENT_SPECS).map((key) => {
             const type = key as ComponentType;
             return (
               <button
                 key={type}
                 onClick={() => addComponent(type)}
-                className="group relative p-3 md:p-4 border-2 border-purple-100 rounded-xl md:rounded-2xl hover:border-purple-300 hover:bg-gradient-to-br hover:from-purple-50 hover:to-pink-50 transition-all text-left flex flex-col items-center gap-1 md:gap-2"
+                className="group relative p-4 border border-white/10 rounded-2xl hover:border-purple-400/50 bg-white/5 backdrop-blur-sm hover:bg-white/10 transition-all text-left flex flex-col items-center gap-2"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-pink-500/0 group-hover:from-purple-500/5 group-hover:to-pink-500/5 rounded-xl md:rounded-2xl transition-all" />
-                <div className="relative font-semibold text-xs md:text-sm text-neutral-800 text-center">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-pink-500/0 group-hover:from-purple-500/10 group-hover:to-pink-500/10 rounded-2xl transition-all" />
+                <div className="relative font-semibold text-sm text-white text-center">
                   {COMPONENT_SPECS[type].label}
                 </div>
               </button>
@@ -235,47 +443,63 @@ export const Simulator: React.FC = () => {
           })}
         </div>
 
-        <div className="mt-auto space-y-2 md:space-y-3 border-t border-purple-100 pt-4 md:pt-6">
+        <div className="mt-auto space-y-3 border-t border-purple-500/20 pt-6">
           <button
             onClick={runSimulation}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white py-2.5 md:py-3 rounded-xl md:rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-200 transition-all text-sm md:text-base"
+            className="relative group w-full"
           >
-            <Play size={16} fill="white" className="md:w-[18px] md:h-[18px]" /> Test Circuit
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur opacity-60 group-hover:opacity-100 transition-opacity" />
+            <div className="relative bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all">
+              <Play size={18} fill="white" /> Test Circuit
+            </div>
           </button>
+
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={exportCircuit}
+              className="bg-white/5 border border-white/10 hover:border-purple-400/50 backdrop-blur-sm text-purple-200 py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 transition-all text-sm"
+              title="Save circuit"
+            >
+              <Download size={16} /> Save
+            </button>
+            <label className="bg-white/5 border border-white/10 hover:border-purple-400/50 backdrop-blur-sm text-purple-200 py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 transition-all cursor-pointer text-sm">
+              <Upload size={16} /> Load
+              <input type="file" accept=".json" onChange={importCircuit} className="hidden" />
+            </label>
+          </div>
+
           <button
             onClick={clearBoard}
-            className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 py-2.5 md:py-3 rounded-xl md:rounded-2xl font-medium flex items-center justify-center gap-2 transition-all text-sm md:text-base"
+            className="w-full bg-red-500/20 border border-red-400/30 hover:border-red-400/50 backdrop-blur-sm text-red-300 py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 transition-all"
           >
-            <Trash2 size={16} className="md:w-[18px] md:h-[18px]" /> Clear Board
+            <Trash2 size={16} /> Clear Board
           </button>
         </div>
 
         {validationMsg && (
-          <div className={`p-3 md:p-4 rounded-xl md:rounded-2xl text-xs md:text-sm font-medium ${
+          <div className={`p-4 rounded-2xl text-sm font-medium backdrop-blur-sm ${
             simState === 'running'
-              ? 'bg-green-50 text-green-800 border border-green-200'
-              : 'bg-orange-50 text-orange-800 border border-orange-200'
+              ? 'bg-green-500/20 border border-green-400/30 text-green-300'
+              : 'bg-orange-500/20 border border-orange-400/30 text-orange-300'
           }`}>
             {validationMsg}
           </div>
         )}
       </div>
 
-      {/* Breadboard Canvas - Realistic Style */}
+      {/* Canvas - Dark futuristic breadboard */}
       <div
-        className="flex-1 relative overflow-hidden"
-        style={{
-          background: 'linear-gradient(135deg, #f5e6d3 0%, #e8d7bd 100%)',
-        }}
+        className="flex-1 relative overflow-hidden bg-gradient-to-br from-neutral-900 via-purple-950/30 to-neutral-900"
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onClick={() => setSelectedComp(null)}
       >
-        {/* Breadboard texture/pattern */}
+        {/* Circuit grid pattern */}
         <div
-          className="absolute inset-0 opacity-20 pointer-events-none"
+          className="absolute inset-0 opacity-5 pointer-events-none"
           style={{
-            backgroundImage: 'radial-gradient(circle at 10px 10px, #8b7355 2px, transparent 0)',
-            backgroundSize: '20px 20px'
+            backgroundImage: 'radial-gradient(circle at 2px 2px, #a855f7 1px, transparent 0)',
+            backgroundSize: '40px 40px'
           }}
         />
 
@@ -284,37 +508,60 @@ export const Simulator: React.FC = () => {
           className="w-full h-full"
           style={{ cursor: isDrawingWire ? 'crosshair' : 'default' }}
         >
-          {/* Power rails (red and blue lines) */}
-          <rect x="20" y="20" width="8" height="95%" fill="#dc2626" opacity="0.7" rx="4" />
-          <rect x="36" y="20" width="8" height="95%" fill="#1e40af" opacity="0.7" rx="4" />
+          {/* Power rails (futuristic glow) */}
+          <defs>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <rect x="20" y="20" width="8" height="95%" fill="#ef4444" opacity="0.6" rx="4" filter="url(#glow)" />
+          <rect x="36" y="20" width="8" height="95%" fill="#3b82f6" opacity="0.6" rx="4" filter="url(#glow)" />
 
-          {/* Draw wires with realistic colors */}
+          {/* Draw wires */}
           {wires.map((wire, idx) => {
             const start = getPinCoords(wire.fromCompId, wire.fromPinId);
             const end = getPinCoords(wire.toCompId, wire.toPinId);
-            const colors = ['#ef4444', '#1f2937', '#22c55e', '#3b82f6', '#eab308', '#f97316'];
+            const colors = ['#ef4444', '#22c55e', '#3b82f6', '#eab308', '#f97316', '#a855f7'];
             const wireColor = colors[idx % colors.length];
+            const isHovered = hoveredWire === wire.id;
 
             return (
-              <g key={wire.id}>
-                {/* Wire shadow for depth */}
+              <g
+                key={wire.id}
+                onMouseEnter={() => setHoveredWire(wire.id)}
+                onMouseLeave={() => setHoveredWire(null)}
+                className="cursor-pointer"
+              >
+                {/* Wire glow */}
                 <line
                   x1={start.x} y1={start.y}
                   x2={end.x} y2={end.y}
-                  stroke="rgba(0,0,0,0.2)"
-                  strokeWidth="6"
+                  stroke={simState === 'running' ? '#22c55e' : wireColor}
+                  strokeWidth="8"
                   strokeLinecap="round"
-                  transform="translate(2, 2)"
+                  opacity="0.3"
+                  filter="url(#glow)"
                 />
                 {/* Actual wire */}
                 <line
                   x1={start.x} y1={start.y}
                   x2={end.x} y2={end.y}
                   stroke={simState === 'running' ? '#22c55e' : wireColor}
-                  strokeWidth="5"
+                  strokeWidth={isHovered ? "6" : "4"}
                   strokeLinecap="round"
                   className={simState === 'running' ? 'animate-pulse' : ''}
                 />
+                {/* Delete button on hover */}
+                {isHovered && (
+                  <g transform={`translate(${(start.x + end.x) / 2}, ${(start.y + end.y) / 2})`}>
+                    <circle r="12" fill="#ef4444" opacity="0.9" onClick={(e) => { e.stopPropagation(); deleteWire(wire.id); }} className="cursor-pointer" />
+                    <text y="5" textAnchor="middle" fill="white" fontSize="16" fontWeight="bold" className="pointer-events-none select-none">×</text>
+                  </g>
+                )}
               </g>
             );
           })}
@@ -330,45 +577,63 @@ export const Simulator: React.FC = () => {
               strokeWidth="5"
               strokeDasharray="8,4"
               strokeLinecap="round"
-              opacity="0.7"
+              opacity="0.8"
+              filter="url(#glow)"
             />
           )}
 
-          {/* Components with realistic styling */}
+          {/* Components */}
           {components.map(comp => {
             const spec = COMPONENT_SPECS[comp.type];
             const isLedOn = comp.type === ComponentType.LED && simState === 'running';
+            const isSelected = selectedComp === comp.id;
+            const isButtonPressed = comp.type === ComponentType.BUTTON && comp.state?.isPressed;
 
             return (
               <g key={comp.id} transform={`translate(${comp.x}, ${comp.y})`}>
+                {/* Selection highlight */}
+                {isSelected && (
+                  <rect
+                    width={spec.width + 10}
+                    height={spec.height + 10}
+                    x={-5}
+                    y={-5}
+                    fill="none"
+                    stroke="#a855f7"
+                    strokeWidth="3"
+                    strokeDasharray="8,4"
+                    rx="8"
+                    filter="url(#glow)"
+                    className="pointer-events-none animate-pulse"
+                  />
+                )}
+
                 {/* Component shadow */}
                 <rect
                   width={spec.width}
                   height={spec.height}
-                  fill="rgba(0,0,0,0.15)"
+                  fill="rgba(0,0,0,0.3)"
                   rx="4"
                   transform="translate(3, 3)"
                   className="pointer-events-none"
                 />
 
-                {/* ARDUINO UNO - Realistic teal board */}
+                {/* ARDUINO UNO */}
                 {comp.type === ComponentType.ARDUINO_UNO && (
                   <>
                     <rect
                       width={spec.width}
                       height={spec.height}
                       fill="#00878F"
-                      stroke="#006064"
+                      stroke="#a855f7"
                       strokeWidth="2"
                       rx="6"
                       onMouseDown={(e) => handleMouseDownComp(e, comp.id)}
                       className="cursor-move"
+                      filter="url(#glow)"
                     />
-                    {/* USB port */}
                     <rect x="5" y="50" width="20" height="15" fill="#c0c0c0" stroke="#888" strokeWidth="1" rx="2" className="pointer-events-none" />
-                    {/* Power jack */}
                     <circle cx="15" cy="20" r="8" fill="#1a1a1a" stroke="#000" strokeWidth="1" className="pointer-events-none" />
-                    {/* ATmega chip */}
                     <rect x="80" y="50" width="40" height="40" fill="#1a1a1a" stroke="#000" strokeWidth="1" rx="2" className="pointer-events-none" />
                     <text x={spec.width / 2} y={spec.height - 10} textAnchor="middle" className="text-xs font-bold pointer-events-none select-none" fill="white">
                       Arduino Uno
@@ -376,10 +641,9 @@ export const Simulator: React.FC = () => {
                   </>
                 )}
 
-                {/* LED - Realistic with dome */}
+                {/* LED */}
                 {comp.type === ComponentType.LED && (
                   <>
-                    {/* LED body */}
                     <rect
                       x="5" y="10" width="30" height="35"
                       fill="#2c3e50"
@@ -389,7 +653,6 @@ export const Simulator: React.FC = () => {
                       onMouseDown={(e) => handleMouseDownComp(e, comp.id)}
                       className="cursor-move"
                     />
-                    {/* LED dome (top) */}
                     <ellipse
                       cx="20" cy="15" rx="12" ry="10"
                       fill={isLedOn ? '#ff5252' : '#e74c3c'}
@@ -398,59 +661,55 @@ export const Simulator: React.FC = () => {
                       onMouseDown={(e) => handleMouseDownComp(e, comp.id)}
                       className="cursor-move"
                       style={{
-                        filter: isLedOn ? 'drop-shadow(0 0 15px rgba(255, 82, 82, 0.9))' : 'none',
+                        filter: isLedOn ? 'drop-shadow(0 0 20px rgba(255, 82, 82, 1))' : 'none',
                         opacity: isLedOn ? 1 : 0.7
                       }}
                     />
-                    {/* LED highlight for 3D effect */}
                     <ellipse cx="17" cy="12" rx="4" ry="3" fill="rgba(255,255,255,0.4)" className="pointer-events-none" />
-                    <text x="20" y="52" textAnchor="middle" className="text-xs font-bold pointer-events-none select-none" fill="#1f2937">
+                    <text x="20" y="52" textAnchor="middle" className="text-xs font-bold pointer-events-none select-none" fill="#a855f7">
                       LED
                     </text>
                   </>
                 )}
 
-                {/* RESISTOR - Realistic with color bands */}
+                {/* RESISTOR */}
                 {comp.type === ComponentType.RESISTOR && (
                   <>
-                    {/* Resistor body */}
                     <rect
                       x="10" y="8" width="60" height="14"
                       fill="#f4e4c1"
-                      stroke="#8b7355"
+                      stroke="#a855f7"
                       strokeWidth="2"
                       rx="3"
                       onMouseDown={(e) => handleMouseDownComp(e, comp.id)}
                       className="cursor-move"
                     />
-                    {/* Color bands (220Ω: Red, Red, Brown, Gold) */}
                     <rect x="20" y="8" width="4" height="14" fill="#ff0000" className="pointer-events-none" />
                     <rect x="30" y="8" width="4" height="14" fill="#ff0000" className="pointer-events-none" />
                     <rect x="40" y="8" width="4" height="14" fill="#8b4513" className="pointer-events-none" />
                     <rect x="55" y="8" width="4" height="14" fill="#ffd700" className="pointer-events-none" />
-                    {/* Leads */}
                     <line x1="5" y1="15" x2="10" y2="15" stroke="#c0c0c0" strokeWidth="2" className="pointer-events-none" />
                     <line x1="70" y1="15" x2="75" y2="15" stroke="#c0c0c0" strokeWidth="2" className="pointer-events-none" />
-                    <text x="40" y="25" textAnchor="middle" className="text-[9px] font-bold pointer-events-none select-none" fill="#3e2723">
+                    <text x="40" y="25" textAnchor="middle" className="text-[9px] font-bold pointer-events-none select-none" fill="#a855f7">
                       220Ω
                     </text>
                   </>
                 )}
 
-                {/* BATTERY - Realistic 9V */}
+                {/* BATTERY */}
                 {comp.type === ComponentType.BATTERY && (
                   <>
                     <rect
                       width={spec.width}
                       height={spec.height}
                       fill="#1a1a1a"
-                      stroke="#000"
+                      stroke="#a855f7"
                       strokeWidth="2"
                       rx="4"
                       onMouseDown={(e) => handleMouseDownComp(e, comp.id)}
                       className="cursor-move"
+                      filter="url(#glow)"
                     />
-                    {/* Battery terminals */}
                     <circle cx="15" cy="8" r="4" fill="#c0c0c0" stroke="#888" strokeWidth="1" className="pointer-events-none" />
                     <circle cx="45" cy="8" r="4" fill="#c0c0c0" stroke="#888" strokeWidth="1" className="pointer-events-none" />
                     <text x="30" y="45" textAnchor="middle" className="text-xs font-bold pointer-events-none select-none" fill="white">
@@ -459,52 +718,49 @@ export const Simulator: React.FC = () => {
                   </>
                 )}
 
-                {/* BUTTON - Tactile switch */}
+                {/* BUTTON */}
                 {comp.type === ComponentType.BUTTON && (
                   <>
-                    {/* Button base */}
                     <rect
                       width={spec.width}
                       height={spec.height}
                       fill="#1f2937"
-                      stroke="#111827"
+                      stroke="#a855f7"
                       strokeWidth="2"
                       rx="4"
                       onMouseDown={(e) => handleMouseDownComp(e, comp.id)}
                       className="cursor-move"
+                      filter="url(#glow)"
                     />
-                    {/* Button cap */}
                     <circle
-                      cx="25" cy="25" r="12"
-                      fill="#ef4444"
-                      stroke="#dc2626"
+                      cx="25" cy={isButtonPressed ? "27" : "25"} r="12"
+                      fill={isButtonPressed ? "#dc2626" : "#ef4444"}
+                      stroke={isButtonPressed ? "#b91c1c" : "#dc2626"}
                       strokeWidth="2"
-                      onMouseDown={(e) => handleMouseDownComp(e, comp.id)}
-                      className="cursor-move"
+                      onClick={(e) => { e.stopPropagation(); toggleButton(comp.id); }}
+                      className="cursor-pointer"
+                      filter={isButtonPressed ? "url(#glow)" : "none"}
                     />
-                    {/* Button highlight */}
                     <circle cx="22" cy="22" r="4" fill="rgba(255,255,255,0.3)" className="pointer-events-none" />
                   </>
                 )}
 
-                {/* ULTRASONIC - HC-SR04 sensor */}
+                {/* ULTRASONIC */}
                 {comp.type === ComponentType.ULTRASONIC && (
                   <>
-                    {/* Sensor body */}
                     <rect
                       width={spec.width}
                       height={spec.height}
                       fill="#3b82f6"
-                      stroke="#1e40af"
+                      stroke="#a855f7"
                       strokeWidth="2"
                       rx="4"
                       onMouseDown={(e) => handleMouseDownComp(e, comp.id)}
                       className="cursor-move"
+                      filter="url(#glow)"
                     />
-                    {/* Left ultrasonic sensor (transmitter) */}
                     <circle cx="20" cy="25" r="12" fill="#c0c0c0" stroke="#888" strokeWidth="2" className="pointer-events-none" />
                     <circle cx="20" cy="25" r="8" fill="#1a1a1a" className="pointer-events-none" />
-                    {/* Right ultrasonic sensor (receiver) */}
                     <circle cx="60" cy="25" r="12" fill="#c0c0c0" stroke="#888" strokeWidth="2" className="pointer-events-none" />
                     <circle cx="60" cy="25" r="8" fill="#1a1a1a" className="pointer-events-none" />
                     <text x="40" y="52" textAnchor="middle" className="text-[8px] font-bold pointer-events-none select-none" fill="white">
@@ -513,33 +769,48 @@ export const Simulator: React.FC = () => {
                   </>
                 )}
 
-                {/* SERVO - Motor with connector */}
+                {/* SERVO */}
                 {comp.type === ComponentType.SERVO && (
                   <>
-                    {/* Servo body */}
                     <rect
                       width={spec.width}
                       height={spec.height - 15}
                       fill="#1e3a8a"
-                      stroke="#1e40af"
+                      stroke="#a855f7"
                       strokeWidth="2"
                       rx="4"
                       onMouseDown={(e) => handleMouseDownComp(e, comp.id)}
                       className="cursor-move"
+                      filter="url(#glow)"
                     />
-                    {/* Servo output shaft */}
                     <circle cx="45" cy="15" r="6" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" className="pointer-events-none" />
                     <circle cx="45" cy="15" r="3" fill="#78350f" className="pointer-events-none" />
-                    {/* Servo label */}
                     <text x="45" y="28" textAnchor="middle" className="text-[9px] font-bold pointer-events-none select-none" fill="white">
                       SERVO
                     </text>
-                    {/* Wire connector visual */}
                     <rect x="20" y="35" width="50" height="8" fill="#2c3e50" stroke="#1a252f" strokeWidth="1" rx="2" className="pointer-events-none" />
                   </>
                 )}
 
-                {/* Pins - realistic style */}
+                {/* Delete & Rotate buttons for selected component */}
+                {isSelected && (
+                  <g>
+                    <g transform={`translate(${spec.width + 15}, 0)`} onClick={(e) => { e.stopPropagation(); deleteComponent(comp.id); }} className="cursor-pointer">
+                      <circle r="12" fill="#ef4444" opacity="0.9" />
+                      <text y="5" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold" className="pointer-events-none select-none">
+                        <Trash2 size={14} />
+                      </text>
+                    </g>
+                    <g transform={`translate(${spec.width + 15}, 30)`} onClick={(e) => { e.stopPropagation(); rotateComponent(comp.id); }} className="cursor-pointer">
+                      <circle r="12" fill="#3b82f6" opacity="0.9" />
+                      <text y="5" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold" className="pointer-events-none select-none">
+                        ↻
+                      </text>
+                    </g>
+                  </g>
+                )}
+
+                {/* Pins */}
                 {spec.pins.map(pin => (
                   <g
                     key={pin.id}
@@ -547,19 +818,15 @@ export const Simulator: React.FC = () => {
                     onMouseDown={(e) => handleMouseDownPin(e, comp.id, pin.id)}
                     className="cursor-pointer hover:scale-125 transition-transform"
                   >
-                    {/* Pin hole shadow */}
                     <circle r="7" fill="rgba(0,0,0,0.3)" transform="translate(1, 1)" />
-                    {/* Pin hole */}
-                    <circle r="7" fill="#8b7355" />
-                    {/* Pin metal contact */}
-                    <circle r="5" fill="#d4af37" stroke="#b8941f" strokeWidth="1" />
-                    {/* Pin label */}
+                    <circle r="7" fill="#6b21a8" />
+                    <circle r="5" fill="#d4af37" stroke="#b8941f" strokeWidth="1" filter="url(#glow)" />
                     <text
                       y="-12"
                       textAnchor="middle"
                       fontSize="9"
                       fontWeight="bold"
-                      fill="#3e2723"
+                      fill="#a855f7"
                       className="pointer-events-none"
                     >
                       {pin.name}
@@ -573,11 +840,23 @@ export const Simulator: React.FC = () => {
 
         {/* Helper text */}
         {components.length === 0 && (
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-neutral-700 text-center pointer-events-none">
-            <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 border-2 border-dashed border-neutral-300">
-              <ZapOff size={48} className="mx-auto mb-4 text-purple-400 opacity-50" />
-              <p className="text-lg font-semibold mb-2">Empty Breadboard</p>
-              <p className="text-sm text-neutral-500">Add components from the sidebar to start building</p>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-3xl blur opacity-40" />
+              <div className="relative bg-white/5 backdrop-blur-xl rounded-3xl p-12 border border-white/10">
+                <ZapOff size={64} className="mx-auto mb-6 text-purple-400 opacity-50" />
+                <p className="text-2xl font-bold text-white mb-3">Empty Canvas</p>
+                <p className="text-lg text-purple-300">Add components from the sidebar to start building</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Instructions overlay */}
+        {components.length > 0 && wires.length === 0 && (
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 pointer-events-none">
+            <div className="bg-purple-500/20 backdrop-blur-sm border border-purple-400/30 px-6 py-3 rounded-full text-purple-200 text-sm font-medium">
+              Click component pins to start wiring
             </div>
           </div>
         )}

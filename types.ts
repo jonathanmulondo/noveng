@@ -88,11 +88,25 @@ export interface Pin {
   type: 'power' | 'ground' | 'digital' | 'analog';
 }
 
+export interface ComponentState {
+  // Button
+  isPressed?: boolean;
+  // Potentiometer
+  angle?: number; // 0-270
+  // Sensor values
+  sensorValue?: number;
+  // LED
+  brightness?: number; // 0-255
+}
+
 export interface SimComponent {
   id: string;
   type: ComponentType;
   x: number;
   y: number;
+  state?: ComponentState;
+  rotation?: 0 | 90 | 180 | 270;
+  label?: string;
 }
 
 export interface Wire {
@@ -101,4 +115,12 @@ export interface Wire {
   fromPinId: string;
   toCompId: string;
   toPinId: string;
+}
+
+export interface CircuitState {
+  components: SimComponent[];
+  wires: Wire[];
+  version: string;
+  createdAt: string;
+  name?: string;
 }
