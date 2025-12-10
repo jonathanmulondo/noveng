@@ -736,7 +736,6 @@ export const ModuleDetail: React.FC = () => {
             </div>
           </>
         )}
-      </div>
     </div>
   );
 };
