@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, Module } from '../services/api';
 import { explainCode } from '../services/geminiService';
-import { ChevronLeft, BookOpen, Loader2, AlertCircle, Star, Clock, Users, Bot, Send, Sparkles, CheckCircle2, PlayCircle, Code2, BookMarked, List, X, Target } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BookOpen, Loader2, AlertCircle, Star, Clock, Users, Bot, Send, Sparkles, CheckCircle2, PlayCircle, Code2, BookMarked, List, X, Target } from 'lucide-react';
 import { ModuleQuiz } from '../components/ModuleQuiz';
 import { getQuizBySlug } from '../data/quizzes';
 
@@ -29,10 +29,15 @@ export const ModuleDetail: React.FC = () => {
   const [overviewContent, setOverviewContent] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'theory' | 'code' | 'quiz'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'learn' | 'quiz'>('overview');
   const [activeSection, setActiveSection] = useState<string>('');
   const [isNovieChatOpen, setIsNovieChatOpen] = useState(false);
   const [quiz, setQuiz] = useState<any>(null);
+
+  // Card swipe navigation state
+  const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
 
   // Chatbot state
   const [messages, setMessages] = useState<Message[]>([
@@ -65,6 +70,69 @@ export const ModuleDetail: React.FC = () => {
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isNovieChatOpen]);
+
+  // Card navigation functions
+  const allCards = activeTab === 'learn' ? parseContentIntoCards(sections.map(s => s.content).join('\n\n')) : [];
+  const totalCards = allCards.length;
+
+  const goToNextCard = () => {
+    if (currentCardIndex < totalCards - 1) {
+      setCurrentCardIndex(currentCardIndex + 1);
+    }
+  };
+
+  const goToPreviousCard = () => {
+    if (currentCardIndex > 0) {
+      setCurrentCardIndex(currentCardIndex - 1);
+    }
+  };
+
+  // Keyboard navigation (Left/Right arrows)
+  useEffect(() => {
+    if (activeTab !== 'learn') return;
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') goToPreviousCard();
+      if (e.key === 'ArrowRight') goToNextCard();
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [activeTab, currentCardIndex, totalCards]);
+
+  // Touch swipe handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      goToNextCard();
+    }
+    if (isRightSwipe) {
+      goToPreviousCard();
+    }
+
+    setTouchStart(0);
+    setTouchEnd(0);
+  };
+
+  // Reset card index when switching to learn tab
+  useEffect(() => {
+    if (activeTab === 'learn') {
+      setCurrentCardIndex(0);
+    }
+  }, [activeTab]);
 
   // Parse lesson content into theory and code sections
   const parseSections = (content: string): LessonSection[] => {
@@ -171,6 +239,30 @@ export const ModuleDetail: React.FC = () => {
     }, 1000);
   };
 
+  // Parse content into story cards (split by ## sections)
+  const parseContentIntoCards = (text: string): Array<{title: string, content: string, emoji?: string}> => {
+    const cards: Array<{title: string, content: string, emoji?: string}> = [];
+    const sections = text.split(/^## /m).filter(s => s.trim());
+
+    sections.forEach(section => {
+      const lines = section.split('\n');
+      const titleLine = lines[0];
+
+      // Extract emoji if present
+      const emojiMatch = titleLine.match(/^([^\w\s]+)\s+(.+)$/);
+      const title = emojiMatch ? emojiMatch[2] : titleLine;
+      const emoji = emojiMatch ? emojiMatch[1] : undefined;
+
+      const content = lines.slice(1).join('\n').trim();
+
+      if (content) {
+        cards.push({ title, content, emoji });
+      }
+    });
+
+    return cards;
+  };
+
   // Render formatted content
   const renderContent = (text: string, isCode: boolean): JSX.Element => {
     const lines = text.split('\n');
@@ -249,8 +341,9 @@ export const ModuleDetail: React.FC = () => {
     return <div className="space-y-2">{elements}</div>;
   };
 
-  const theorySections = sections.filter(s => s.type === 'theory');
-  const codeSections = sections.filter(s => s.type === 'code');
+  // No longer needed - we use unified card-based learning instead
+  // const theorySections = sections.filter(s => s.type === 'theory');
+  // const codeSections = sections.filter(s => s.type === 'code');
 
   if (loading) {
     return (
@@ -287,214 +380,268 @@ export const ModuleDetail: React.FC = () => {
     );
   }
 
-  const currentSections = activeTab === 'theory' ? theorySections : activeTab === 'code' ? codeSections : [];
-  const currentSection = currentSections.find(s => s.id === activeSection);
+  // No longer needed with card-based layout
+  // const currentSections = activeTab === 'theory' ? theorySections : activeTab === 'code' ? codeSections : [];
+  // const currentSection = currentSections.find(s => s.id === activeSection);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-purple-950 via-neutral-900 to-black relative">
+      {/* Animated background particles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-10">
+        {[...Array(30)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full animate-pulse"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2 + Math.random() * 3}s`,
+            }}
+          />
+        ))}
+      </div>
+
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-neutral-200 shadow-sm">
+      <div className="sticky top-0 z-30 bg-neutral-900/95 backdrop-blur-xl border-b border-purple-500/20 shadow-lg">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <button
             onClick={() => navigate('/courses')}
-            className="flex items-center gap-2 text-purple-600 hover:text-purple-700 font-semibold transition-colors"
+            className="group flex items-center gap-2 text-purple-300 hover:text-purple-200 font-semibold transition-colors"
           >
-            <ChevronLeft size={20} />
-            Back to Courses
+            <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+            <span>Back to Courses</span>
           </button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Content - 3 columns */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Module Hero */}
-            <div className="bg-white rounded-3xl border-2 border-neutral-200 overflow-hidden shadow-xl">
-              <div className="relative h-64">
-                <img
-                  src={module.thumbnail_url || 'https://images.unsplash.com/photo-1553406830-ef2513450d76?auto=format&fit=crop&w=1200&q=80'}
-                  alt={module.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-                <div className="absolute bottom-6 left-6 right-6">
-                  <div className="text-xs font-bold uppercase tracking-wider text-purple-300 mb-2">
-                    Module {module.module_number} • {module.category}
-                  </div>
-                  <h1 className="text-4xl font-display font-bold text-white mb-3">
-                    {module.title}
-                  </h1>
-                  <div className="flex items-center gap-4 text-white/80 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Clock size={16} />
-                      <span>{module.duration}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users size={16} />
-                      <span>{module.student_count?.toLocaleString() || 0} students</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Star size={16} className="fill-yellow-400 text-yellow-400" />
-                      <span>{module.rating?.toFixed(1) || '4.8'}</span>
-                    </div>
-                  </div>
+      {/* Mobile-First Swipe Card Layout */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+
+        {/* Module Header Card */}
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+          <div className="relative h-48 sm:h-56">
+            <img
+              src={module.thumbnail_url || 'https://images.unsplash.com/photo-1553406830-ef2513450d76?auto=format&fit=crop&w=1200&q=80'}
+              alt={module.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6">
+              <div className="text-xs font-semibold uppercase tracking-wider text-purple-300 mb-1">
+                Module {module.module_number} • {module.category}
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2">
+                {module.title}
+              </h1>
+              <div className="flex flex-wrap items-center gap-3 text-white/90 text-xs sm:text-sm">
+                <div className="flex items-center gap-1.5">
+                  <Clock size={14} />
+                  <span>{module.duration}</span>
                 </div>
-              </div>
-
-              {/* Navigation Tabs */}
-              <div className="border-b border-neutral-200 bg-white flex">
-                <button
-                  onClick={() => setActiveTab('overview')}
-                  className={`flex-1 px-6 py-4 font-semibold transition-all relative flex items-center justify-center gap-2 ${
-                    activeTab === 'overview' ? 'text-purple-600' : 'text-neutral-500 hover:text-neutral-700'
-                  }`}
-                >
-                  <BookMarked size={18} />
-                  Overview
-                  {activeTab === 'overview' && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 to-pink-500" />
-                  )}
-                </button>
-                <button
-                  onClick={() => { setActiveTab('theory'); if (theorySections[0]) setActiveSection(theorySections[0].id); }}
-                  className={`flex-1 px-6 py-4 font-semibold transition-all relative flex items-center justify-center gap-2 ${
-                    activeTab === 'theory' ? 'text-purple-600' : 'text-neutral-500 hover:text-neutral-700'
-                  }`}
-                >
-                  <BookOpen size={18} />
-                  Theory ({theorySections.length})
-                  {activeTab === 'theory' && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 to-pink-500" />
-                  )}
-                </button>
-                <button
-                  onClick={() => { setActiveTab('code'); if (codeSections[0]) setActiveSection(codeSections[0].id); }}
-                  className={`flex-1 px-6 py-4 font-semibold transition-all relative flex items-center justify-center gap-2 ${
-                    activeTab === 'code' ? 'text-purple-600' : 'text-neutral-500 hover:text-neutral-700'
-                  }`}
-                >
-                  <Code2 size={18} />
-                  Code ({codeSections.length})
-                  {activeTab === 'code' && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 to-pink-500" />
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveTab('quiz')}
-                  className={`flex-1 px-6 py-4 font-semibold transition-all relative flex items-center justify-center gap-2 ${
-                    activeTab === 'quiz' ? 'text-purple-600' : 'text-neutral-500 hover:text-neutral-700'
-                  }`}
-                >
-                  <Target size={18} />
-                  Quiz {quiz && `(${quiz.questions.length})`}
-                  {activeTab === 'quiz' && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 to-pink-500" />
-                  )}
-                </button>
-              </div>
-
-              {/* Content */}
-              <div className="p-8">
-                {activeTab === 'overview' ? (
-                  <div className="bg-gradient-to-b from-purple-900 to-purple-800 p-8 rounded-2xl shadow-lg text-white">
-                    {renderContent(overviewContent, false)}
-                  </div>
-                ) : activeTab === 'quiz' ? (
-                  quiz ? (
-                    <ModuleQuiz
-                      moduleSlug={id!}
-                      questions={quiz.questions}
-                      passingScore={70}
-                      onComplete={(score, passed) => {
-                        console.log(`Quiz complete! Score: ${score}%, Passed: ${passed}`);
-                        // TODO: Save to user progress database
-                      }}
-                    />
-                  ) : (
-                    <div className="text-center py-16 bg-white rounded-3xl border-2 border-neutral-200">
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mx-auto mb-6">
-                        <Target size={36} className="text-purple-600" />
-                      </div>
-                      <h3 className="text-2xl font-display font-bold text-neutral-800 mb-2">
-                        Quiz Coming Soon!
-                      </h3>
-                      <p className="text-neutral-600 mb-4">
-                        We're preparing an interactive quiz for this module.
-                      </p>
-                      <p className="text-sm text-neutral-500">
-                        Check back soon or try another module's quiz!
-                      </p>
-                    </div>
-                  )
-                ) : currentSection ? (
-                  <div>
-                    <h2 className="text-2xl font-display font-bold text-neutral-800 mb-6 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg">
-                        {activeTab === 'theory' ? <BookOpen size={20} /> : <Code2 size={20} />}
-                      </div>
-                      {currentSection.title}
-                    </h2>
-                    <div className="bg-gradient-to-b from-purple-900 to-purple-800 p-8 rounded-2xl shadow-lg text-white">
-                      {renderContent(currentSection.content, activeTab === 'code')}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <p className="text-neutral-500">No {activeTab} sections available</p>
-                  </div>
-                )}
+                <div className="flex items-center gap-1.5">
+                  <Users size={14} />
+                  <span>{module.student_count?.toLocaleString() || 0}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Star size={14} className="fill-yellow-400 text-yellow-400" />
+                  <span>{module.rating?.toFixed(1) || '4.8'}</span>
+                </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Sidebar - 1 column */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Table of Contents - Like Navigation Bar */}
-            {(activeTab === 'theory' || activeTab === 'code') && currentSections.length > 0 && (
-              <div className="bg-gradient-to-b from-purple-900 to-purple-800 rounded-3xl p-6 text-white sticky top-24 shadow-xl">
-                <div className="flex items-center gap-2 mb-6">
-                  <List size={20} />
-                  <h3 className="font-display font-bold">Table of Contents</h3>
-                </div>
-                <div className="space-y-2">
-                  {currentSections.map((section, index) => (
-                    <button
-                      key={section.id}
-                      onClick={() => setActiveSection(section.id)}
-                      className={`w-full text-left px-4 py-3 rounded-xl transition-all ${
-                        activeSection === section.id
-                          ? 'bg-white/20 shadow-lg backdrop-blur-sm'
-                          : 'hover:bg-white/10'
-                      }`}
-                    >
+        {/* Simple Tab Pills */}
+        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold text-sm whitespace-nowrap transition-all ${
+              activeTab === 'overview'
+                ? 'bg-purple-600 text-white shadow-lg'
+                : 'bg-white text-neutral-700 hover:bg-neutral-50 shadow'
+            }`}
+          >
+            <BookMarked size={16} />
+            Overview
+          </button>
+          <button
+            onClick={() => setActiveTab('learn')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold text-sm whitespace-nowrap transition-all ${
+              activeTab === 'learn'
+                ? 'bg-purple-600 text-white shadow-lg'
+                : 'bg-white text-neutral-700 hover:bg-neutral-50 shadow'
+            }`}
+          >
+            <BookOpen size={16} />
+            Learn ({allCards.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('quiz')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold text-sm whitespace-nowrap transition-all ${
+              activeTab === 'quiz'
+                ? 'bg-purple-600 text-white shadow-lg'
+                : 'bg-white text-neutral-700 hover:bg-neutral-50 shadow'
+            }`}
+          >
+            <Target size={16} />
+            Quiz {quiz && `(${quiz.questions.length})`}
+          </button>
+        </div>
+
+        {/* Content Area */}
+        {activeTab === 'overview' ? (
+          <div className="bg-white rounded-2xl shadow-md p-6 sm:p-8">
+            <div className="prose prose-sm sm:prose max-w-none">
+              {renderContent(overviewContent, false)}
+            </div>
+          </div>
+        ) : activeTab === 'quiz' ? (
+          quiz ? (
+            <div className="bg-white rounded-2xl shadow-md p-6 sm:p-8">
+              <ModuleQuiz
+                moduleSlug={id!}
+                questions={quiz.questions}
+                passingScore={70}
+                onComplete={(score, passed) => {
+                  console.log(`Quiz complete! Score: ${score}%, Passed: ${passed}`);
+                }}
+              />
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl shadow-md p-12 text-center">
+              <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
+                <Target size={28} className="text-purple-600" />
+              </div>
+              <h3 className="text-xl font-bold text-neutral-800 mb-2">
+                Quiz Coming Soon!
+              </h3>
+              <p className="text-neutral-600 text-sm">
+                We're preparing an interactive quiz for this module.
+              </p>
+            </div>
+          )
+        ) : (
+          /* Duolingo-Style Swipe Cards */
+          <div className="relative">
+            {allCards.length > 0 ? (
+              <>
+                {/* Card Container */}
+                <div
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden"
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                >
+                  {/* Progress Bar */}
+                  <div className="bg-neutral-100 h-2">
+                    <div
+                      className="bg-gradient-to-r from-purple-600 to-pink-500 h-full transition-all duration-300"
+                      style={{ width: `${((currentCardIndex + 1) / totalCards) * 100}%` }}
+                    />
+                  </div>
+
+                  {/* Card Header */}
+                  <div className="bg-gradient-to-r from-purple-600 to-pink-500 px-6 py-4">
+                    <div className="flex items-center justify-between text-white">
                       <div className="flex items-center gap-3">
-                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold ${
-                          activeSection === section.id ? 'bg-white text-purple-700' : 'bg-white/20'
-                        }`}>
-                          {index + 1}
+                        <div className="text-3xl">{allCards[currentCardIndex]?.emoji || '📚'}</div>
+                        <div>
+                          <h2 className="text-xl font-bold">{allCards[currentCardIndex]?.title}</h2>
+                          <p className="text-sm text-white/80">Step {currentCardIndex + 1} of {totalCards}</p>
                         </div>
-                        <span className="text-sm font-medium line-clamp-2">{section.title}</span>
                       </div>
-                    </button>
-                  ))}
+                    </div>
+                  </div>
+
+                  {/* Card Content */}
+                  <div className="p-6 sm:p-8 min-h-[400px] max-h-[600px] overflow-y-auto">
+                    <div className="prose prose-sm sm:prose max-w-none">
+                      {renderContent(allCards[currentCardIndex]?.content || '', false)}
+                    </div>
+                  </div>
+
+                  {/* Navigation Controls */}
+                  <div className="border-t border-neutral-200 px-6 py-4 bg-neutral-50">
+                    <div className="flex items-center justify-between">
+                      <button
+                        onClick={goToPreviousCard}
+                        disabled={currentCardIndex === 0}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-200"
+                      >
+                        <ChevronLeft size={18} />
+                        <span className="hidden sm:inline">Previous</span>
+                      </button>
+
+                      {/* Progress Dots */}
+                      <div className="flex items-center gap-1.5">
+                        {allCards.map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentCardIndex(index)}
+                            className={`transition-all ${
+                              index === currentCardIndex
+                                ? 'w-8 h-2 bg-purple-600'
+                                : 'w-2 h-2 bg-neutral-300 hover:bg-neutral-400'
+                            } rounded-full`}
+                            aria-label={`Go to card ${index + 1}`}
+                          />
+                        ))}
+                      </div>
+
+                      <button
+                        onClick={goToNextCard}
+                        disabled={currentCardIndex === totalCards - 1}
+                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold text-sm hover:bg-purple-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-purple-600"
+                      >
+                        <span className="hidden sm:inline">Next</span>
+                        <ChevronRight size={18} />
+                      </button>
+                    </div>
+
+                    {/* Keyboard Hint */}
+                    <div className="hidden md:block text-center mt-3 text-xs text-neutral-500">
+                      Use ← → arrow keys to navigate
+                    </div>
+                  </div>
                 </div>
+
+                {/* Completion CTA */}
+                {currentCardIndex === totalCards - 1 && (
+                  <div className="mt-6 bg-gradient-to-r from-purple-600 to-pink-500 rounded-2xl shadow-lg p-6 text-white text-center">
+                    <h3 className="text-xl font-bold mb-2">Great Progress! 🎉</h3>
+                    <p className="text-white/90 mb-4 text-sm">
+                      You've completed all lesson cards. Ready for the quiz?
+                    </p>
+                    <button
+                      onClick={() => setActiveTab('quiz')}
+                      className="bg-white text-purple-600 px-6 py-3 rounded-full font-semibold hover:bg-purple-50 transition-colors shadow-lg"
+                    >
+                      Take the Quiz
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-md p-12 text-center">
+                <p className="text-neutral-500">No lesson content available</p>
               </div>
             )}
-
-            {/* Novie Floating Button */}
-            <button
-              onClick={() => setIsNovieChatOpen(true)}
-              className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-500 rounded-full shadow-2xl hover:shadow-purple-300 hover:scale-110 transition-all duration-300 flex items-center justify-center z-40"
-              aria-label="Open Novie AI Assistant"
-            >
-              <Bot size={28} className="text-white" />
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                <Sparkles size={12} className="text-white" />
-              </div>
-            </button>
           </div>
-        </div>
+        )}
+
+        {/* Novie Floating Button */}
+        <button
+          onClick={() => setIsNovieChatOpen(true)}
+          className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-500 rounded-full shadow-2xl hover:shadow-purple-300 hover:scale-110 transition-all duration-300 flex items-center justify-center z-40"
+          aria-label="Open Novie AI Assistant"
+        >
+          <Bot size={28} className="text-white" />
+          <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+            <Sparkles size={12} className="text-white" />
+          </div>
+        </button>
+      </div>
 
         {/* Novie Chat Popup Modal */}
         {isNovieChatOpen && (
