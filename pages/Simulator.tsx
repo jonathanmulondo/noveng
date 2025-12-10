@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { ComponentType, SimComponent, Wire, Pin, CircuitState } from '../types';
 import { COMPONENT_SPECS } from '../constants';
-import { Trash2, Play, RefreshCw, ZapOff, Save, Download, Upload, X, RotateCw, Terminal, Code, Cpu, ChevronDown, ChevronUp, Copy } from 'lucide-react';
+import { Trash2, Play, RefreshCw, ZapOff, Save, Download, Upload, X, RotateCw, Terminal, Code, Cpu, ChevronDown, ChevronUp, Copy, ZoomIn, ZoomOut, Maximize2, Undo, Redo, Search, Info } from 'lucide-react';
 
 export const Simulator: React.FC = () => {
   const [components, setComponents] = useState<SimComponent[]>([]);
@@ -37,7 +37,18 @@ void loop() {
     'A0': { mode: 'INPUT', value: 512 },
   });
 
+  // Phase 4: UX Enhancements state
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [history, setHistory] = useState<{ components: SimComponent[], wires: Wire[] }[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showShortcuts, setShowShortcuts] = useState(false);
+
   const svgRef = useRef<SVGSVGElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
 
   // Auto-save to localStorage
   useEffect(() => {
@@ -80,10 +91,119 @@ void loop() {
     const CTM = svgRef.current.getScreenCTM();
     if (!CTM) return { x: 0, y: 0 };
     return {
-      x: (e.clientX - CTM.e) / CTM.a,
-      y: (e.clientY - CTM.f) / CTM.d
+      x: (e.clientX - CTM.e) / CTM.a - pan.x,
+      y: (e.clientY - CTM.f) / CTM.d - pan.y
     };
   };
+
+  // Phase 4: Zoom & Pan functions
+  const handleZoomIn = () => {
+    setZoom(prev => Math.min(prev + 0.2, 3)); // Max 3x zoom
+  };
+
+  const handleZoomOut = () => {
+    setZoom(prev => Math.max(prev - 0.2, 0.5)); // Min 0.5x zoom
+  };
+
+  const handleResetView = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (e.ctrlKey) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      setZoom(prev => Math.max(0.5, Math.min(3, prev + delta)));
+    }
+  };
+
+  const handlePanStart = (e: React.MouseEvent) => {
+    if (e.button === 1 || (e.button === 0 && e.ctrlKey)) { // Middle mouse or Ctrl + Left mouse
+      setIsPanning(true);
+      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    }
+  };
+
+  const handlePanMove = (e: React.MouseEvent) => {
+    if (isPanning) {
+      setPan({
+        x: e.clientX - panStart.x,
+        y: e.clientY - panStart.y
+      });
+    }
+  };
+
+  const handlePanEnd = () => {
+    setIsPanning(false);
+  };
+
+  // Phase 4: Undo/Redo functions
+  const saveToHistory = () => {
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push({ components: JSON.parse(JSON.stringify(components)), wires: JSON.parse(JSON.stringify(wires)) });
+    setHistory(newHistory.slice(-20)); // Keep last 20 states
+    setHistoryIndex(Math.min(newHistory.length - 1, 19));
+  };
+
+  const undo = () => {
+    if (historyIndex > 0) {
+      const prevState = history[historyIndex - 1];
+      setComponents(prevState.components);
+      setWires(prevState.wires);
+      setHistoryIndex(historyIndex - 1);
+    }
+  };
+
+  const redo = () => {
+    if (historyIndex < history.length - 1) {
+      const nextState = history[historyIndex + 1];
+      setComponents(nextState.components);
+      setWires(nextState.wires);
+      setHistoryIndex(historyIndex + 1);
+    }
+  };
+
+  // Save to history when components or wires change
+  useEffect(() => {
+    if (components.length > 0 || wires.length > 0) {
+      const timeoutId = setTimeout(() => {
+        saveToHistory();
+      }, 500); // Debounce to avoid too many history states
+      return () => clearTimeout(timeoutId);
+    }
+  }, [components, wires]);
+
+  // Add keyboard shortcuts for undo/redo and zoom
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      }
+      if (e.ctrlKey && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        redo();
+      }
+      if (e.ctrlKey && e.key === '0') {
+        e.preventDefault();
+        handleResetView();
+      }
+      if (e.ctrlKey && e.key === '=') {
+        e.preventDefault();
+        handleZoomIn();
+      }
+      if (e.ctrlKey && e.key === '-') {
+        e.preventDefault();
+        handleZoomOut();
+      }
+      if (e.key === '?') {
+        setShowShortcuts(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [historyIndex, history, zoom]);
 
   const addComponent = (type: ComponentType) => {
     const id = `${type}_${Date.now()}`;
@@ -601,22 +721,49 @@ void loop() {
           <p className="text-sm text-purple-300">Click to add to canvas</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-1 gap-3">
-          {Object.keys(COMPONENT_SPECS).map((key) => {
+        {/* Component Search */}
+        <div className="relative">
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search components..."
+            className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 focus:border-purple-400/50 rounded-xl text-white placeholder-purple-300/50 text-sm focus:outline-none transition-all"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-1 gap-3 overflow-y-auto max-h-96">
+          {Object.keys(COMPONENT_SPECS)
+            .filter((key) => {
+              const type = key as ComponentType;
+              const label = COMPONENT_SPECS[type].label.toLowerCase();
+              return label.includes(searchQuery.toLowerCase());
+            })
+            .map((key) => {
+              const type = key as ComponentType;
+              return (
+                <button
+                  key={type}
+                  onClick={() => addComponent(type)}
+                  className="group relative p-4 border border-white/10 rounded-2xl hover:border-purple-400/50 bg-white/5 backdrop-blur-sm hover:bg-white/10 transition-all text-left flex flex-col items-center gap-2"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-pink-500/0 group-hover:from-purple-500/10 group-hover:to-pink-500/10 rounded-2xl transition-all" />
+                  <div className="relative font-semibold text-sm text-white text-center">
+                    {COMPONENT_SPECS[type].label}
+                  </div>
+                </button>
+              );
+            })}
+          {Object.keys(COMPONENT_SPECS).filter((key) => {
             const type = key as ComponentType;
-            return (
-              <button
-                key={type}
-                onClick={() => addComponent(type)}
-                className="group relative p-4 border border-white/10 rounded-2xl hover:border-purple-400/50 bg-white/5 backdrop-blur-sm hover:bg-white/10 transition-all text-left flex flex-col items-center gap-2"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-pink-500/0 group-hover:from-purple-500/10 group-hover:to-pink-500/10 rounded-2xl transition-all" />
-                <div className="relative font-semibold text-sm text-white text-center">
-                  {COMPONENT_SPECS[type].label}
-                </div>
-              </button>
-            );
-          })}
+            const label = COMPONENT_SPECS[type].label.toLowerCase();
+            return label.includes(searchQuery.toLowerCase());
+          }).length === 0 && (
+            <div className="col-span-2 md:col-span-1 text-center text-purple-300/50 py-8">
+              No components found
+            </div>
+          )}
         </div>
 
         <div className="mt-auto space-y-3 border-t border-purple-500/20 pt-6">
@@ -665,9 +812,18 @@ void loop() {
 
       {/* Canvas - Dark futuristic breadboard */}
       <div
+        ref={canvasRef}
         className="flex-1 relative overflow-hidden bg-gradient-to-br from-neutral-900 via-purple-950/30 to-neutral-900"
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
+        onMouseMove={(e) => {
+          handleMouseMove(e);
+          handlePanMove(e);
+        }}
+        onMouseUp={(e) => {
+          handleMouseUp(e);
+          handlePanEnd();
+        }}
+        onMouseDown={handlePanStart}
+        onWheel={handleWheel}
         onClick={() => setSelectedComp(null)}
       >
         {/* Circuit grid pattern */}
@@ -675,14 +831,19 @@ void loop() {
           className="absolute inset-0 opacity-5 pointer-events-none"
           style={{
             backgroundImage: 'radial-gradient(circle at 2px 2px, #a855f7 1px, transparent 0)',
-            backgroundSize: '40px 40px'
+            backgroundSize: `${40 * zoom}px ${40 * zoom}px`,
+            transform: `translate(${pan.x}px, ${pan.y}px)`
           }}
         />
 
         <svg
           ref={svgRef}
           className="w-full h-full"
-          style={{ cursor: isDrawingWire ? 'crosshair' : 'default' }}
+          style={{
+            cursor: isPanning ? 'grabbing' : (isDrawingWire ? 'crosshair' : 'default'),
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            transformOrigin: '0 0'
+          }}
         >
           {/* Power rails (futuristic glow) */}
           <defs>
@@ -1458,6 +1619,156 @@ void loop() {
           </div>
         </button>
       </div>
+
+      {/* Zoom & Navigation Controls - Bottom Left */}
+      <div className="absolute bottom-4 left-4 flex flex-col gap-2 z-30">
+        {/* Zoom Controls */}
+        <div className="flex flex-col gap-1 bg-neutral-900/95 backdrop-blur-xl rounded-xl border border-purple-500/20 p-2">
+          <button
+            onClick={handleZoomIn}
+            title="Zoom In (Ctrl + =)"
+            className="p-2 hover:bg-purple-500/20 rounded-lg transition-colors text-purple-300 hover:text-white"
+          >
+            <ZoomIn size={20} />
+          </button>
+          <div className="text-xs text-center text-purple-300 font-mono py-1">
+            {(zoom * 100).toFixed(0)}%
+          </div>
+          <button
+            onClick={handleZoomOut}
+            title="Zoom Out (Ctrl + -)"
+            className="p-2 hover:bg-purple-500/20 rounded-lg transition-colors text-purple-300 hover:text-white"
+          >
+            <ZoomOut size={20} />
+          </button>
+          <button
+            onClick={handleResetView}
+            title="Reset View (Ctrl + 0)"
+            className="p-2 hover:bg-purple-500/20 rounded-lg transition-colors text-purple-300 hover:text-white border-t border-purple-500/20"
+          >
+            <Maximize2 size={20} />
+          </button>
+        </div>
+
+        {/* Undo/Redo Controls */}
+        <div className="flex gap-1 bg-neutral-900/95 backdrop-blur-xl rounded-xl border border-purple-500/20 p-2">
+          <button
+            onClick={undo}
+            disabled={historyIndex <= 0}
+            title="Undo (Ctrl + Z)"
+            className="p-2 hover:bg-purple-500/20 rounded-lg transition-colors text-purple-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <Undo size={20} />
+          </button>
+          <button
+            onClick={redo}
+            disabled={historyIndex >= history.length - 1}
+            title="Redo (Ctrl + Y)"
+            className="p-2 hover:bg-purple-500/20 rounded-lg transition-colors text-purple-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <Redo size={20} />
+          </button>
+        </div>
+
+        {/* Help Button */}
+        <button
+          onClick={() => setShowShortcuts(!showShortcuts)}
+          title="Keyboard Shortcuts (?)"
+          className="bg-neutral-900/95 backdrop-blur-xl rounded-xl border border-purple-500/20 p-2 hover:bg-purple-500/20 transition-colors text-purple-300 hover:text-white"
+        >
+          <Info size={20} />
+        </button>
+      </div>
+
+      {/* Keyboard Shortcuts Panel */}
+      {showShortcuts && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center" onClick={() => setShowShortcuts(false)}>
+          <div className="relative max-w-2xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-3xl blur opacity-50" />
+            <div className="relative bg-neutral-900 rounded-3xl border border-purple-500/20 p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">Keyboard Shortcuts</h2>
+                <button
+                  onClick={() => setShowShortcuts(false)}
+                  className="text-purple-300 hover:text-white transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Navigation */}
+                <div>
+                  <h3 className="text-purple-400 font-semibold mb-3">Navigation</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-purple-200">Zoom In</span>
+                      <kbd className="px-2 py-1 bg-white/5 border border-white/10 rounded text-purple-300">Ctrl + =</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-purple-200">Zoom Out</span>
+                      <kbd className="px-2 py-1 bg-white/5 border border-white/10 rounded text-purple-300">Ctrl + -</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-purple-200">Reset View</span>
+                      <kbd className="px-2 py-1 bg-white/5 border border-white/10 rounded text-purple-300">Ctrl + 0</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-purple-200">Pan Canvas</span>
+                      <kbd className="px-2 py-1 bg-white/5 border border-white/10 rounded text-purple-300">Ctrl + Drag</kbd>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Editing */}
+                <div>
+                  <h3 className="text-purple-400 font-semibold mb-3">Editing</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-purple-200">Undo</span>
+                      <kbd className="px-2 py-1 bg-white/5 border border-white/10 rounded text-purple-300">Ctrl + Z</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-purple-200">Redo</span>
+                      <kbd className="px-2 py-1 bg-white/5 border border-white/10 rounded text-purple-300">Ctrl + Y</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-purple-200">Delete Component</span>
+                      <kbd className="px-2 py-1 bg-white/5 border border-white/10 rounded text-purple-300">Del</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-purple-200">Cancel Wire</span>
+                      <kbd className="px-2 py-1 bg-white/5 border border-white/10 rounded text-purple-300">Esc</kbd>
+                    </div>
+                  </div>
+                </div>
+
+                {/* File Operations */}
+                <div>
+                  <h3 className="text-purple-400 font-semibold mb-3">File Operations</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-purple-200">Save Circuit</span>
+                      <kbd className="px-2 py-1 bg-white/5 border border-white/10 rounded text-purple-300">Ctrl + S</kbd>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Help */}
+                <div>
+                  <h3 className="text-purple-400 font-semibold mb-3">Help</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-purple-200">Show Shortcuts</span>
+                      <kbd className="px-2 py-1 bg-white/5 border border-white/10 rounded text-purple-300">?</kbd>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Interactive Component Controls - Potentiometer */}
       {selectedComp && components.find(c => c.id === selectedComp)?.type === ComponentType.POTENTIOMETER && (
