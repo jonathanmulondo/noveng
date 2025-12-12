@@ -302,6 +302,8 @@ export const ModuleDetail: React.FC = () => {
 
   // Render formatted content
   const renderContent = (text: string, isCode: boolean): JSX.Element => {
+    console.log(`🎨 [renderContent] Rendering content, length: ${text?.length || 0}, isCode: ${isCode}`);
+
     const lines = text.split('\n');
     let inCodeBlock = false;
     let codeContent = '';
@@ -340,15 +342,20 @@ export const ModuleDetail: React.FC = () => {
         return;
       }
 
+      // Skip horizontal rules
+      if (line.trim() === '---' || line.trim() === '***' || line.trim() === '___') {
+        return;
+      }
+
       // Numbered lists
       if (line.match(/^\d+\.\s+(.+)$/)) {
         const text = line.replace(/^\d+\.\s+/, '').replace(/\*\*(.+?)\*\*/g, '$1');
         elements.push(
           <div key={`num-${key++}`} className="flex gap-3 mb-3">
-            <div className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+            <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 text-xs font-bold flex-shrink-0">
               {line.match(/^\d+/)?.[0]}
             </div>
-            <p className="text-white/90 leading-relaxed">{text}</p>
+            <p className="text-neutral-800 leading-relaxed">{text}</p>
           </div>
         );
         return;
@@ -359,8 +366,8 @@ export const ModuleDetail: React.FC = () => {
         const text = line.replace(/^[-*]\s+/, '').replace(/\*\*(.+?)\*\*/g, '$1');
         elements.push(
           <div key={`bullet-${key++}`} className="flex gap-3 mb-2">
-            <div className="w-2 h-2 rounded-full bg-pink-400 mt-2 flex-shrink-0" />
-            <p className="text-white/90 leading-relaxed">{text}</p>
+            <div className="w-2 h-2 rounded-full bg-pink-500 mt-2 flex-shrink-0" />
+            <p className="text-neutral-700 leading-relaxed">{text}</p>
           </div>
         );
         return;
@@ -368,13 +375,14 @@ export const ModuleDetail: React.FC = () => {
 
       // Regular text
       if (line.trim()) {
-        const cleanText = line.replace(/\*\*(.+?)\*\*/g, '<strong class="text-pink-300 font-semibold">$1</strong>');
+        const cleanText = line.replace(/\*\*(.+?)\*\*/g, '<strong class="text-purple-700 font-semibold">$1</strong>');
         elements.push(
-          <p key={`p-${key++}`} className="text-white/90 leading-relaxed mb-4" dangerouslySetInnerHTML={{ __html: cleanText }} />
+          <p key={`p-${key++}`} className="text-neutral-800 leading-relaxed mb-4" dangerouslySetInnerHTML={{ __html: cleanText }} />
         );
       }
     });
 
+    console.log(`🎨 [renderContent] Created ${elements.length} elements from ${lines.length} lines`);
     return <div className="space-y-2">{elements}</div>;
   };
 
