@@ -240,6 +240,7 @@ export const ModuleDetail: React.FC = () => {
 
         // Load quiz if available
         const moduleQuiz = getQuizBySlug(id);
+        console.log(`🎯 [ModuleDetail] Loading quiz for "${id}":`, moduleQuiz);
         setQuiz(moduleQuiz);
 
         console.log(`📖 [ModuleDetail] Fetching content for module: ${id}`);
