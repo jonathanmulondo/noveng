@@ -4,10 +4,11 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "copy-curriculum": "cp -r curriculum public/ || xcopy /E /I /Y curriculum public\\curriculum",
+    "dev": "npm run copy-curriculum && vite",
+    "build": "npm run copy-curriculum && vite build",
     "preview": "vite preview",
-    "vercel-build": "vite build"
+    "vercel-build": "npm run copy-curriculum && vite build"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",

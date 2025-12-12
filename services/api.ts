@@ -69,13 +69,36 @@ export const api = {
     overview: string;
     lesson: string;
   }> {
-    const response = await fetch(`${API_BASE_URL}/modules/${slug}/content`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch module content: ${response.statusText}`);
+    // Try backend API first
+    try {
+      const response = await fetch(`${API_BASE_URL}/modules/${slug}/content`);
+      if (response.ok) {
+        const data = await response.json();
+        return data.content;
+      }
+    } catch (error) {
+      console.log('Backend unavailable, falling back to static files', error);
     }
 
-    const data = await response.json();
-    return data.content;
+    // Fallback: fetch markdown files directly from curriculum folder
+    try {
+      const [overviewRes, lessonRes] = await Promise.all([
+        fetch(`/curriculum/${slug}/overview.md`),
+        fetch(`/curriculum/${slug}/lesson.md`)
+      ]);
+
+      if (!overviewRes.ok || !lessonRes.ok) {
+        throw new Error('Failed to fetch curriculum files');
+      }
+
+      const overview = await overviewRes.text();
+      const lesson = await lessonRes.text();
+
+      return { overview, lesson };
+    } catch (error) {
+      console.error('Failed to fetch module content from both API and static files:', error);
+      throw new Error(`Failed to fetch module content for ${slug}`);
+    }
   },
 
   /**

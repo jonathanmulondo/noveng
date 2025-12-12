@@ -1,0 +1,26 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:07.040
+Hello. Well, you might have observed that your Arduino board has numbers. Well, these
+
+00:00:07.040 --> 00:00:13.320
+numbers on this side of the board are called digital pins. As you can evidently tell, they're
+
+00:00:13.320 --> 00:00:22.000
+numbered from 0 all the way to 13. They used to turn things on and off, like LEDs, like
+
+00:00:22.000 --> 00:00:28.719
+we have right over here, and buzzers as well. Okay. And if you be a bit more observant,
+
+00:00:28.719 --> 00:00:34.480
+you'll see that some of them have a bit of a tied symbol next to the numbers, like number
+
+00:00:34.480 --> 00:00:42.560
+6, number 5, and number 3. Well, this just simply means that they support PWM. PWM stands
+
+00:00:42.560 --> 00:00:52.160
+for Pulse Width Modulation. So instead of going on and off, these pins give you a fake
+
+00:00:52.160 --> 00:00:55.080
+analog-like output that fades or changes.
+

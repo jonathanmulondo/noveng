@@ -1,0 +1,53 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.920
+Well, what we have today here is a breadboard as well.
+
+00:00:03.920 --> 00:00:11.640
+So this is just a temporary workspace for you as you're building circuits without soldering.
+
+00:00:11.640 --> 00:00:15.440
+So it's good to note that you have two different sections of a breadboard.
+
+00:00:15.440 --> 00:00:20.200
+You have this section which appears twice at the top and at the bottom and you also
+
+00:00:20.200 --> 00:00:22.320
+have the middle section.
+
+00:00:22.320 --> 00:00:26.160
+So what's the most important thing to know about a breadboard?
+
+00:00:26.160 --> 00:00:31.879
+Well for this top section, it's good to know that the rails are connected horizontally
+
+00:00:31.879 --> 00:00:35.759
+you can say, along like this up to the very end.
+
+00:00:35.759 --> 00:00:41.680
+So usually you have a plus and a minus, this represents the 5 volts and the other is usually
+
+00:00:41.680 --> 00:00:42.680
+the ground.
+
+00:00:42.680 --> 00:00:44.200
+It's the same story down here.
+
+00:00:44.200 --> 00:00:48.000
+Whereas here in the middle, the rails are connected vertically.
+
+00:00:48.000 --> 00:00:53.200
+So whatever is for the same vertical line, if you plug in a wire here, it'll be at the
+
+00:00:53.200 --> 00:00:59.439
+same potential or have the same voltage as a pin along the same line, but a few dots
+
+00:00:59.439 --> 00:01:00.439
+below.
+
+00:01:00.439 --> 00:01:01.439
+So that's one thing you should know.
+
+00:01:01.439 --> 00:01:01.439
+
+

@@ -1,0 +1,20 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.440
+Hello, this is an Arduino UNO. So you may be wondering what is this device here?
+
+00:00:06.440 --> 00:00:10.680
+Well basically it's a small microcontroller board that lets you
+
+00:00:10.680 --> 00:00:17.600
+control electronics using code. You can power this device using a USB cord that
+
+00:00:17.600 --> 00:00:25.320
+looks like this. Very fancy right? When you plug this cord into your laptop and
+
+00:00:25.879 --> 00:00:32.880
+you plug into this port right here of the Arduino, you see the LEDs come on
+
+00:00:32.880 --> 00:00:40.840
+and turn on like that. And that means that the board is now receiving power.
+

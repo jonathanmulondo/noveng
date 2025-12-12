@@ -1,0 +1,23 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.360
+Well, on the other hand, we have the analog pins labeled from A0 all the way to A5.
+
+00:00:09.360 --> 00:00:15.600
+These are made for reading smooth, continuous signals from sensors like light, temperature
+
+00:00:15.600 --> 00:00:17.160
+and rotation.
+
+00:00:17.160 --> 00:00:23.240
+When using sensors like the LDRs and the temperature sensors, instead of just going from high or
+
+00:00:23.240 --> 00:00:31.559
+low, these analog pins give readings in the range from 0 to 1023.
+
+00:00:31.559 --> 00:00:36.160
+So if you're going to be using projects that are modeling things in the real world, well
+
+00:00:36.160 --> 00:00:37.480
+you'll be using these pins a lot.
+

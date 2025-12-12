@@ -41,3 +41,8 @@ Thumbs.db
 
 # Testing
 coverage/
+
+# Public curriculum (copied from curriculum/ folder)
+public/curriculum/
+
+.vercel

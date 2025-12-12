@@ -1,0 +1,35 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.560
+Well, let's have a quick tour of our Arduino board. Well, it has very
+
+00:00:05.400 --> 00:00:11.640
+Important sections such as the 3.3 and the 5 volts together with the ground for my components
+
+00:00:11.640 --> 00:00:13.320
+This is our power area
+
+00:00:13.320 --> 00:00:19.440
+we also have the digital and the analog pins for connecting sensors and
+
+00:00:19.959 --> 00:00:24.059
+Outputs and then we have the microcontroller chip right over here at the center
+
+00:00:24.200 --> 00:00:28.879
+Well, this is the actual brain actually running the program that we upload over here
+
+00:00:28.879 --> 00:00:32.759
+We have the USB port for uploading code
+
+00:00:32.880 --> 00:00:36.279
+We also have a reset button right over here in the corner
+
+00:00:36.560 --> 00:00:39.720
+Just in case your project locks up or in case you need to you know
+
+00:00:39.840 --> 00:00:46.400
+Reset your robot or whatever you be programming and then we have the TX and the RX
+
+00:00:46.680 --> 00:00:53.959
+LEDs that blink whenever data is being sent or received knowing these basics makes wiring easier and much more fun
+
