@@ -351,11 +351,11 @@ export const ModuleDetail: React.FC = () => {
       if (line.match(/^\d+\.\s+(.+)$/)) {
         const text = line.replace(/^\d+\.\s+/, '').replace(/\*\*(.+?)\*\*/g, '$1');
         elements.push(
-          <div key={`num-${key++}`} className="flex gap-3 mb-3">
-            <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 text-xs font-bold flex-shrink-0">
+          <div key={`num-${key++}`} className="flex gap-3 mb-4">
+            <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 text-sm font-bold flex-shrink-0">
               {line.match(/^\d+/)?.[0]}
             </div>
-            <p className="text-neutral-800 leading-relaxed">{text}</p>
+            <p className="text-neutral-800 leading-relaxed font-medium text-base">{text}</p>
           </div>
         );
         return;
@@ -365,9 +365,9 @@ export const ModuleDetail: React.FC = () => {
       if (line.match(/^[-*]\s+(.+)$/)) {
         const text = line.replace(/^[-*]\s+/, '').replace(/\*\*(.+?)\*\*/g, '$1');
         elements.push(
-          <div key={`bullet-${key++}`} className="flex gap-3 mb-2">
-            <div className="w-2 h-2 rounded-full bg-pink-500 mt-2 flex-shrink-0" />
-            <p className="text-neutral-700 leading-relaxed">{text}</p>
+          <div key={`bullet-${key++}`} className="flex gap-3 mb-3">
+            <div className="w-2 h-2 rounded-full bg-pink-500 mt-2.5 flex-shrink-0" />
+            <p className="text-neutral-800 leading-relaxed font-medium text-base">{text}</p>
           </div>
         );
         return;
@@ -375,9 +375,9 @@ export const ModuleDetail: React.FC = () => {
 
       // Regular text
       if (line.trim()) {
-        const cleanText = line.replace(/\*\*(.+?)\*\*/g, '<strong class="text-purple-700 font-semibold">$1</strong>');
+        const cleanText = line.replace(/\*\*(.+?)\*\*/g, '<strong class="text-purple-700 font-bold">$1</strong>');
         elements.push(
-          <p key={`p-${key++}`} className="text-neutral-800 leading-relaxed mb-4" dangerouslySetInnerHTML={{ __html: cleanText }} />
+          <p key={`p-${key++}`} className="text-neutral-800 leading-relaxed font-medium text-base mb-4" dangerouslySetInnerHTML={{ __html: cleanText }} />
         );
       }
     });
@@ -590,10 +590,10 @@ export const ModuleDetail: React.FC = () => {
                   <div className="bg-gradient-to-r from-purple-600 to-pink-500 px-6 py-4">
                     <div className="flex items-center justify-between text-white">
                       <div className="flex items-center gap-3">
-                        <div className="text-3xl">{allCards[currentCardIndex]?.emoji || '📚'}</div>
+                        <div className="text-4xl">{allCards[currentCardIndex]?.emoji || '📚'}</div>
                         <div>
-                          <h2 className="text-xl font-bold">{allCards[currentCardIndex]?.title}</h2>
-                          <p className="text-sm text-white/80">Step {currentCardIndex + 1} of {totalCards}</p>
+                          <h2 className="text-xl md:text-2xl font-display font-bold">{allCards[currentCardIndex]?.title}</h2>
+                          <p className="text-sm font-semibold text-white/90">Step {currentCardIndex + 1} of {totalCards}</p>
                         </div>
                       </div>
                     </div>
@@ -654,7 +654,7 @@ export const ModuleDetail: React.FC = () => {
                 {/* Completion CTA */}
                 {currentCardIndex === totalCards - 1 && (
                   <div className="mt-6 bg-gradient-to-r from-purple-600 to-pink-500 rounded-2xl shadow-lg p-6 text-white text-center">
-                    <h3 className="text-xl font-bold mb-2">Great Progress! 🎉</h3>
+                    <h3 className="text-xl md:text-2xl font-display font-bold mb-2">Great Progress! 🎉</h3>
                     <p className="text-white/90 mb-4 text-sm">
                       You've completed all lesson cards. Ready for the quiz?
                     </p>
