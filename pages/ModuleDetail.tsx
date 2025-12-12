@@ -76,6 +76,14 @@ export const ModuleDetail: React.FC = () => {
   const allCards = activeTab === 'learn' ? parseContentIntoCards(lessonContent) : [];
   const totalCards = allCards.length;
 
+  // Debug: Log when cards change
+  useEffect(() => {
+    console.log(`🎴 [ModuleDetail] Cards updated. Total: ${totalCards}, ActiveTab: ${activeTab}`);
+    if (activeTab === 'learn') {
+      console.log(`📝 [ModuleDetail] Lesson content length for parsing: ${lessonContent?.length || 0} chars`);
+    }
+  }, [totalCards, activeTab, lessonContent]);
+
   const goToNextCard = () => {
     if (currentCardIndex < totalCards - 1) {
       setCurrentCardIndex(currentCardIndex + 1);
@@ -191,9 +199,17 @@ export const ModuleDetail: React.FC = () => {
         const moduleQuiz = getQuizBySlug(id);
         setQuiz(moduleQuiz);
 
+        console.log(`📖 [ModuleDetail] Fetching content for module: ${id}`);
         const content = await api.getModuleContent(id);
+        console.log(`📊 [ModuleDetail] Received content:`, {
+          overviewLength: content.overview?.length || 0,
+          lessonLength: content.lesson?.length || 0
+        });
+
         setOverviewContent(content.overview);
         setLessonContent(content.lesson);
+
+        console.log(`✏️ [ModuleDetail] Set lesson content, length: ${content.lesson?.length || 0}`);
 
         const parsedSections = parseSections(content.lesson);
         setSections(parsedSections);

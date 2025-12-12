@@ -69,34 +69,56 @@ export const api = {
     overview: string;
     lesson: string;
   }> {
+    console.log(`🔍 [API] Fetching module content for slug: "${slug}"`);
+
     // Try backend API first
     try {
-      const response = await fetch(`${API_BASE_URL}/modules/${slug}/content`);
+      const apiUrl = `${API_BASE_URL}/modules/${slug}/content`;
+      console.log(`🔗 [API] Trying backend API: ${apiUrl}`);
+      const response = await fetch(apiUrl);
+      console.log(`📡 [API] Backend response status: ${response.status}`);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ [API] Successfully fetched from backend');
         return data.content;
       }
     } catch (error) {
-      console.log('Backend unavailable, falling back to static files', error);
+      console.log('⚠️ [API] Backend unavailable, falling back to static files:', error);
     }
 
     // Fallback: fetch markdown files directly from curriculum folder
     try {
+      const overviewUrl = `/curriculum/${slug}/overview.md`;
+      const lessonUrl = `/curriculum/${slug}/lesson.md`;
+      console.log(`📄 [API] Fetching static files:`);
+      console.log(`   - Overview: ${overviewUrl}`);
+      console.log(`   - Lesson: ${lessonUrl}`);
+
       const [overviewRes, lessonRes] = await Promise.all([
-        fetch(`/curriculum/${slug}/overview.md`),
-        fetch(`/curriculum/${slug}/lesson.md`)
+        fetch(overviewUrl),
+        fetch(lessonUrl)
       ]);
 
+      console.log(`📊 [API] Static file responses:`);
+      console.log(`   - Overview: ${overviewRes.status} ${overviewRes.statusText}`);
+      console.log(`   - Lesson: ${lessonRes.status} ${lessonRes.statusText}`);
+
       if (!overviewRes.ok || !lessonRes.ok) {
-        throw new Error('Failed to fetch curriculum files');
+        throw new Error(`Failed to fetch curriculum files. Overview: ${overviewRes.status}, Lesson: ${lessonRes.status}`);
       }
 
       const overview = await overviewRes.text();
       const lesson = await lessonRes.text();
 
+      console.log(`📝 [API] Content lengths:`);
+      console.log(`   - Overview: ${overview.length} chars`);
+      console.log(`   - Lesson: ${lesson.length} chars`);
+      console.log('✅ [API] Successfully fetched from static files');
+
       return { overview, lesson };
     } catch (error) {
-      console.error('Failed to fetch module content from both API and static files:', error);
+      console.error('❌ [API] Failed to fetch module content from both API and static files:', error);
       throw new Error(`Failed to fetch module content for ${slug}`);
     }
   },
