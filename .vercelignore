@@ -1,9 +1,6 @@
 # Backend (will be deployed separately)
 backend/
 
-# Curriculum (will be deployed separately or seeded to DB)
-curriculum/
-
 # Development
 node_modules/
 .env
