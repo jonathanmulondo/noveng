@@ -72,6 +72,49 @@ export const ModuleDetail: React.FC = () => {
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isNovieChatOpen]);
 
+  // Parse content into story cards (split by ## sections)
+  const parseContentIntoCards = (text: string): Array<{title: string, content: string, emoji?: string}> => {
+    if (!text || text.trim() === '') {
+      console.log('parseContentIntoCards: No text provided');
+      return [];
+    }
+
+    const cards: Array<{title: string, content: string, emoji?: string}> = [];
+
+    // Split by ## headers (level 2)
+    const sections = text.split(/\n## /);
+
+    console.log('parseContentIntoCards: Found', sections.length, 'sections');
+
+    sections.forEach((section, index) => {
+      // Skip the first section if it's just the title (# heading)
+      if (index === 0 && section.startsWith('#')) {
+        return;
+      }
+
+      const lines = section.split('\n');
+      const titleLine = lines[0].replace(/^##\s*/, '').trim();
+
+      // Skip if no title
+      if (!titleLine) return;
+
+      // Extract emoji if present
+      const emojiMatch = titleLine.match(/^([^\w\s]+)\s+(.+)$/);
+      const title = emojiMatch ? emojiMatch[2].trim() : titleLine;
+      const emoji = emojiMatch ? emojiMatch[1] : '📚';
+
+      // Get content (everything after the title line)
+      const content = lines.slice(1).join('\n').trim();
+
+      if (title) {
+        cards.push({ title, content: content || 'No content available', emoji });
+      }
+    });
+
+    console.log('parseContentIntoCards: Created', cards.length, 'cards');
+    return cards;
+  };
+
   // Card navigation functions
   const allCards = activeTab === 'learn' ? parseContentIntoCards(lessonContent) : [];
   const totalCards = allCards.length;
@@ -255,49 +298,6 @@ export const ModuleDetail: React.FC = () => {
       setMessages(prev => [...prev, novieMessage]);
       setIsLoadingChat(false);
     }, 1000);
-  };
-
-  // Parse content into story cards (split by ## sections)
-  const parseContentIntoCards = (text: string): Array<{title: string, content: string, emoji?: string}> => {
-    if (!text || text.trim() === '') {
-      console.log('parseContentIntoCards: No text provided');
-      return [];
-    }
-
-    const cards: Array<{title: string, content: string, emoji?: string}> = [];
-
-    // Split by ## headers (level 2)
-    const sections = text.split(/\n## /);
-
-    console.log('parseContentIntoCards: Found', sections.length, 'sections');
-
-    sections.forEach((section, index) => {
-      // Skip the first section if it's just the title (# heading)
-      if (index === 0 && section.startsWith('#')) {
-        return;
-      }
-
-      const lines = section.split('\n');
-      const titleLine = lines[0].replace(/^##\s*/, '').trim();
-
-      // Skip if no title
-      if (!titleLine) return;
-
-      // Extract emoji if present
-      const emojiMatch = titleLine.match(/^([^\w\s]+)\s+(.+)$/);
-      const title = emojiMatch ? emojiMatch[2].trim() : titleLine;
-      const emoji = emojiMatch ? emojiMatch[1] : '📚';
-
-      // Get content (everything after the title line)
-      const content = lines.slice(1).join('\n').trim();
-
-      if (title) {
-        cards.push({ title, content: content || 'No content available', emoji });
-      }
-    });
-
-    console.log('parseContentIntoCards: Created', cards.length, 'cards');
-    return cards;
   };
 
   // Render formatted content
