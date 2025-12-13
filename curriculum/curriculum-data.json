@@ -51,14 +51,14 @@
         "title": "More on Blinking LEDs",
         "slug": "more-on-blinking-leds",
         "level": "Intermediate",
-        "duration": "25 min",
+        "duration": "15 min",
         "difficulty": "Intermediate",
         "category": "Arduino",
         "thumbnail": "/thumbnails/led-patterns.jpg",
         "rating": 4.7,
         "studentCount": 12450,
         "prerequisites": ["Blinking an LED"],
-        "tags": ["LED", "arrays", "patterns", "traffic-light", "sequences"]
+        "tags": ["LED", "arrays", "for-loops", "traffic-light"]
       }
     ]
   }

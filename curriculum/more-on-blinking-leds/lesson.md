@@ -2,153 +2,94 @@
 
 ## 📦 What You'll Need
 - Arduino Uno board
-- 5 LEDs (mix of colors - red, yellow, green ideal for traffic light)
-- 5× 220Ω resistors
+- 3 LEDs (red, yellow, green - for traffic light)
+- 3× 220Ω resistors
 - Breadboard
-- 10+ jumper wires
+- 6 jumper wires
 - USB cable
 
 ---
 
-## 🌟 From One LED to Many!
+## 🌟 From One LED to Three!
 
-You've mastered blinking a single LED - now let's control multiple LEDs at once and create mesmerizing patterns!
+You've mastered controlling one LED. Now let's level up by controlling multiple LEDs at once!
 
-In this lesson, you'll build:
-- Traffic light systems
-- LED chasers (like Knight Rider)
-- Heartbeat patterns
-- Random blinking effects
+In this lesson, you'll learn two essential programming concepts:
+- **Arrays** - Store multiple values in one variable
+- **For loops** - Repeat actions efficiently
 
-These patterns form the foundation of:
-- 🚦 Smart traffic control systems
-- 🎮 Gaming LED effects
-- 🚨 Emergency vehicle lights
-- 🎄 Holiday light displays
-
-Let's make LEDs dance! 💡
+We'll apply these skills to build a real traffic light system! 🚦
 
 ---
 
 ## 🧠 Understanding Arrays
 
-To control multiple LEDs efficiently, we need **arrays** - a way to store multiple values in one variable.
+Instead of creating separate variables for each LED, we can use an **array** to store multiple pin numbers.
 
 **Without arrays (messy):**
 ```cpp
-int led1 = 9;
-int led2 = 10;
-int led3 = 11;
-int led4 = 12;
-int led5 = 13;
+int redLight = 9;
+int yellowLight = 10;
+int greenLight = 11;
 ```
 
 **With arrays (clean):**
 ```cpp
-int leds[] = {9, 10, 11, 12, 13};
+int lights[] = {9, 10, 11};
 ```
 
 **Accessing array values:**
-- `leds[0]` = 9 (first LED)
-- `leds[1]` = 10 (second LED)
-- `leds[2]` = 11 (third LED)
-- And so on...
+- `lights[0]` = 9 (red LED)
+- `lights[1]` = 10 (yellow LED)
+- `lights[2]` = 11 (green LED)
 
-**Important:** Arrays start counting at 0, not 1!
-
----
-
-## 🔌 Wiring 5 LEDs
-
-Let's wire up 5 LEDs to pins 9, 10, 11, 12, and 13.
-
-**For each LED:**
-1. Place LED in breadboard
-2. Connect long leg → 220Ω resistor → Arduino pin (9-13)
-3. Connect short leg → GND rail
-4. Connect GND rail → Arduino GND
-
-**Quick Wiring:**
-```
-Pin 9  ──[220Ω]──(LED1+)──(LED1-)─┐
-Pin 10 ──[220Ω]──(LED2+)──(LED2-)─┤
-Pin 11 ──[220Ω]──(LED3+)──(LED3-)─┼── GND
-Pin 12 ──[220Ω]──(LED4+)──(LED4-)─┤
-Pin 13 ──[220Ω]──(LED5+)──(LED5-)─┘
-```
-
-All LED short legs connect to the same ground rail!
+**Important:** Arrays start counting at **0**, not 1!
 
 ---
 
-## 💻 Sequential LED Chase
+## 🔌 Wiring the Traffic Light
 
-Let's make LEDs light up one by one, like a chaser pattern!
+Let's wire up 3 LEDs to create a traffic light.
 
-```cpp
-// LED Chaser Pattern
+**Connection for each LED:**
+1. LED long leg → 220Ω resistor → Arduino pin
+2. LED short leg → GND rail
 
-int leds[] = {9, 10, 11, 12, 13};  // Array of LED pins
-int numLeds = 5;  // Number of LEDs
-
-void setup() {
-  // Set all LED pins as OUTPUT using a for loop
-  for (int i = 0; i < numLeds; i++) {
-    pinMode(leds[i], OUTPUT);
-  }
-
-  Serial.begin(9600);
-  Serial.println("LED Chaser Started!");
-}
-
-void loop() {
-  // Turn on LEDs one by one from left to right
-  for (int i = 0; i < numLeds; i++) {
-    digitalWrite(leds[i], HIGH);
-    Serial.print("LED ");
-    Serial.print(i + 1);
-    Serial.println(" ON");
-    delay(200);  // Wait 200ms
-  }
-
-  // Turn off all LEDs
-  for (int i = 0; i < numLeds; i++) {
-    digitalWrite(leds[i], LOW);
-  }
-  delay(200);  // Pause before repeating
-}
-```
-
-**How it works:**
-- First `for` loop turns LEDs on sequentially
-- Second `for` loop turns all LEDs off
-- Pattern repeats forever!
-
----
-
-## 🚦 Traffic Light System
-
-Now let's build a real traffic light with proper timing!
-
-**Wiring:**
+**Pin assignments:**
 - Pin 9: Red LED
 - Pin 10: Yellow LED
 - Pin 11: Green LED
 
+**Wiring diagram:**
+```
+Pin 9  ──[220Ω]──(Red LED+)──(Red LED-)─┐
+Pin 10 ──[220Ω]──(Yellow LED+)──(Yellow LED-)─┼── GND
+Pin 11 ──[220Ω]──(Green LED+)──(Green LED-)─┘
+```
+
+All three short legs connect to the same GND rail!
+
+---
+
+## 💻 Traffic Light Code
+
+Here's the complete code for a working traffic light:
+
 ```cpp
-// Traffic Light Controller
+// Traffic Light System
 
 int redLight = 9;
 int yellowLight = 10;
 int greenLight = 11;
 
 void setup() {
+  // Configure all LED pins as OUTPUT
   pinMode(redLight, OUTPUT);
   pinMode(yellowLight, OUTPUT);
   pinMode(greenLight, OUTPUT);
 
   Serial.begin(9600);
-  Serial.println("🚦 Traffic Light System Active");
+  Serial.println("🚦 Traffic Light Active");
 }
 
 void loop() {
@@ -182,253 +123,125 @@ void loop() {
 }
 ```
 
-**Real Traffic Light Timing:**
-- Red: 5 seconds (STOP)
-- Yellow: 2 seconds (CAUTION)
-- Green: 5 seconds (GO)
-- Yellow: 2 seconds (PREPARE TO STOP)
+---
+
+## 🔍 How It Works
+
+**The Pattern:**
+1. **Red** (5 seconds) - Stop
+2. **Yellow** (2 seconds) - Prepare to go
+3. **Green** (5 seconds) - Go
+4. **Yellow** (2 seconds) - Prepare to stop
+5. Repeat!
+
+**Key technique:**
+- Turn ONE LED on: `digitalWrite(LED, HIGH)`
+- Turn ALL others off: `digitalWrite(LED, LOW)`
+- Wait with `delay()`
+
+Notice how we explicitly set all three LEDs each time? This ensures only one is on at a time.
 
 ---
 
-## 💓 Heartbeat Pattern
+## 🚀 Using For Loops (Bonus)
 
-Create a realistic heartbeat effect with two quick pulses!
+Want cleaner code? Use a for loop to set up all pins at once:
 
 ```cpp
-// Heartbeat Pattern
+// Using arrays and for loops
 
-int heartLED = 13;
+int lights[] = {9, 10, 11};  // Array of LED pins
+int numLights = 3;
 
 void setup() {
-  pinMode(heartLED, OUTPUT);
+  // Set all pins as OUTPUT using a for loop
+  for (int i = 0; i < numLights; i++) {
+    pinMode(lights[i], OUTPUT);
+  }
+
   Serial.begin(9600);
+  Serial.println("🚦 Traffic Light Active");
 }
 
-void loop() {
-  // First beat
-  digitalWrite(heartLED, HIGH);
-  delay(100);
-  digitalWrite(heartLED, LOW);
-  delay(100);
-
-  // Second beat
-  digitalWrite(heartLED, HIGH);
-  delay(100);
-  digitalWrite(heartLED, LOW);
-
-  // Long pause
-  delay(1000);
-
-  Serial.println("💓 Lub-dub");
-}
-```
-
-**Heartbeat timing:**
-- Beat 1: 100ms ON, 100ms OFF
-- Beat 2: 100ms ON
-- Pause: 1000ms (1 second)
-- Repeat
-
----
-
-## 🎯 Bidirectional Chase
-
-LEDs light up left to right, then right to left!
-
-```cpp
-// Bidirectional LED Chaser
-
-int leds[] = {9, 10, 11, 12, 13};
-int numLeds = 5;
-
-void setup() {
-  for (int i = 0; i < numLeds; i++) {
-    pinMode(leds[i], OUTPUT);
+// Turn off all LEDs function
+void allOff() {
+  for (int i = 0; i < numLights; i++) {
+    digitalWrite(lights[i], LOW);
   }
 }
 
 void loop() {
-  // Forward direction (left to right)
-  for (int i = 0; i < numLeds; i++) {
-    digitalWrite(leds[i], HIGH);
-    delay(150);
-    digitalWrite(leds[i], LOW);
-  }
+  // Red
+  allOff();
+  digitalWrite(lights[0], HIGH);  // lights[0] = pin 9
+  Serial.println("🔴 RED");
+  delay(5000);
 
-  // Backward direction (right to left)
-  for (int i = numLeds - 1; i >= 0; i--) {
-    digitalWrite(leds[i], HIGH);
-    delay(150);
-    digitalWrite(leds[i], LOW);
-  }
+  // Yellow
+  allOff();
+  digitalWrite(lights[1], HIGH);  // lights[1] = pin 10
+  Serial.println("🟡 YELLOW");
+  delay(2000);
+
+  // Green
+  allOff();
+  digitalWrite(lights[2], HIGH);  // lights[2] = pin 11
+  Serial.println("🟢 GREEN");
+  delay(5000);
+
+  // Yellow
+  allOff();
+  digitalWrite(lights[1], HIGH);
+  Serial.println("🟡 YELLOW");
+  delay(2000);
 }
 ```
 
-**Key trick:** The second loop counts backwards using `i--`!
+**What improved:**
+- `for` loop sets up all pins in one line
+- `allOff()` function turns off all LEDs cleanly
+- Code is easier to modify (add more LEDs? Just update the array!)
 
 ---
 
-## ⚡ Random Blinking
+## 🎯 Try This Challenge!
 
-Make LEDs blink randomly for a dramatic effect!
+Modify the traffic light to add a "pedestrian crossing" feature:
+1. All lights off
+2. Red starts blinking (pedestrians can cross)
+3. Resume normal sequence
 
-```cpp
-// Random LED Blinker
-
-int leds[] = {9, 10, 11, 12, 13};
-int numLeds = 5;
-
-void setup() {
-  for (int i = 0; i < numLeds; i++) {
-    pinMode(leds[i], OUTPUT);
-  }
-
-  // Seed random number generator
-  randomSeed(analogRead(0));
-}
-
-void loop() {
-  // Pick a random LED
-  int randomLED = random(0, numLeds);
-
-  // Blink it
-  digitalWrite(leds[randomLED], HIGH);
-  delay(100);
-  digitalWrite(leds[randomLED], LOW);
-  delay(200);
-}
-```
-
-**`random(0, numLeds)`** picks a random number from 0 to 4!
-
----
-
-## 🎨 Advanced: Binary Counter
-
-Display numbers in binary using 5 LEDs!
-
-```cpp
-// Binary Counter (0-31)
-
-int leds[] = {9, 10, 11, 12, 13};
-int numLeds = 5;
-
-void setup() {
-  for (int i = 0; i < numLeds; i++) {
-    pinMode(leds[i], OUTPUT);
-  }
-  Serial.begin(9600);
-}
-
-void loop() {
-  // Count from 0 to 31
-  for (int number = 0; number < 32; number++) {
-    displayBinary(number);
-    Serial.print("Number: ");
-    Serial.println(number);
-    delay(500);
-  }
-}
-
-void displayBinary(int number) {
-  // Display number in binary on LEDs
-  for (int i = 0; i < numLeds; i++) {
-    // Check if bit i is set in number
-    if (number & (1 << i)) {
-      digitalWrite(leds[i], HIGH);
-    } else {
-      digitalWrite(leds[i], LOW);
-    }
-  }
-}
-```
-
-**Example:** Number 13 = binary 01101
-- LED 0: ON (bit 0 = 1)
-- LED 1: OFF (bit 1 = 0)
-- LED 2: ON (bit 2 = 1)
-- LED 3: ON (bit 3 = 1)
-- LED 4: OFF (bit 4 = 0)
-
----
-
-## 🎯 Try These Challenges!
-
-**Challenge 1: Police Lights**
-Alternate two LEDs rapidly (red and blue) like emergency vehicles.
-
-**Challenge 2: Theater Chase**
-Light up every other LED, then shift the pattern.
-
-**Challenge 3: Fade Effect**
-Can you make LEDs turn on gradually? (Hint: We'll need PWM - coming in future lessons!)
-
-**Challenge 4: Custom Pattern**
-Create your own unique pattern - maybe spell out SOS in a sequence?
-
-**Challenge 5: Traffic Intersection**
-Control TWO traffic lights for a full intersection (8 LEDs total)!
-
----
-
-## 🔧 Troubleshooting
-
-**Problem: Only some LEDs work**
-- ✓ Check each LED polarity (long leg to resistor)
-- ✓ Verify resistors are connected to correct pins
-- ✓ Test each LED individually
-- ✓ Check for loose connections
-
-**Problem: LEDs blink at wrong times**
-- ✓ Review your delay() values
-- ✓ Check array indices (remember: start at 0!)
-- ✓ Use Serial.println() to debug
-
-**Problem: Pattern doesn't repeat correctly**
-- ✓ Make sure you turn all LEDs OFF when needed
-- ✓ Check for infinite loops
-- ✓ Verify loop conditions
-
-**Problem: Code upload fails**
-- ✓ Close Serial Monitor before uploading
-- ✓ Check board and port settings
-- ✓ Try a simpler sketch first
+Hint: Use a for loop to make the red LED blink 5 times!
 
 ---
 
 ## ✅ What You've Learned
 
-Congratulations! You've mastered:
-- ✓ Using arrays to manage multiple pins
-- ✓ For loops for efficient LED control
-- ✓ Creating sequential patterns
-- ✓ Building a traffic light system
-- ✓ Timing complex sequences
-- ✓ Random number generation
-- ✓ Bidirectional loops
+Great work! You now understand:
+- ✓ How arrays store multiple values: `int lights[] = {9, 10, 11}`
+- ✓ Array indexing starts at 0
+- ✓ For loops for efficient repetition
+- ✓ Controlling multiple LEDs in sequence
+- ✓ Creating realistic timing patterns
 
 **Key Concepts:**
-- **Arrays** - Store multiple values: `int leds[] = {9, 10, 11};`
-- **For loops** - Repeat actions efficiently
-- **Array indexing** - Access values with `leds[0]`, `leds[1]`, etc.
+- **Arrays** - Group multiple values together
+- **For loops** - Repeat code efficiently
 - **Sequential control** - One LED at a time
-- **Timing patterns** - Different delays create different effects
+- **Timing** - Different delays create different effects
 
 ---
 
 ## 🚀 What's Next?
 
-You now have serious LED control skills! These patterns are used in:
-- 🎮 Gaming keyboards with RGB lighting
-- 🚗 Car turn signals and brake lights
-- 🏢 Building decorative lighting
-- 🎭 Stage and theater lighting effects
-- 🤖 Robot status indicators
+These core concepts (arrays and for loops) are used everywhere in Arduino:
+- 🎮 Controlling multiple motors in robots
+- 🎹 Reading button arrays (keypads)
+- 📊 Managing sensor data
+- 💡 RGB LED color control
 
-In future lessons, you'll learn:
-- PWM for smooth LED fading
-- RGB LEDs for millions of colors
-- NeoPixel LED strips for advanced effects
-- Combining LEDs with sensors for interaction
+You've learned the foundation for controlling multiple outputs efficiently!
 
-You're becoming an LED master! 🎉
+In future lessons, you'll combine these skills with sensors to create interactive projects.
+
+Keep building! 🎉

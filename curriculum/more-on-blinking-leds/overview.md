@@ -1,13 +1,11 @@
 **Level:** Intermediate
 
-**Time Estimate:** 25 minutes
+**Time Estimate:** 15 minutes
 
-Ready to level up your LED skills? In this module, you'll learn to control multiple LEDs simultaneously and create impressive patterns like traffic lights, chasers, and heartbeat effects. You'll master arrays, for loops, and timing sequences - essential skills for building interactive projects.
+Ready to control multiple LEDs? This module teaches you the essential skills: arrays to manage multiple pins and for loops to control them efficiently. You'll build a traffic light system that demonstrates these core programming concepts in action.
 
 **What You'll Learn:**
-- Control multiple LEDs with arrays
-- Create sequential lighting patterns
-- Build a traffic light system
-- Use for loops for efficient code
-- Design custom light sequences
-- Understand timing and delays in complex patterns
+- Store multiple pin numbers using arrays
+- Use for loops to control LEDs efficiently
+- Build a working traffic light system
+- Understand timing sequences
