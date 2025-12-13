@@ -590,8 +590,23 @@ export const ModuleDetail: React.FC = () => {
                   {/* Card Header */}
                   <div className="bg-gradient-to-r from-purple-600 to-pink-500 px-6 py-4">
                     <div className="flex items-center justify-between text-white">
-                      <div className="flex items-center gap-3">
-                        <div className="text-4xl">{allCards[currentCardIndex]?.emoji || '📚'}</div>
+                      <div className="flex items-center gap-4">
+                        {/* Arduino Board Image */}
+                        <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-xl p-2 flex items-center justify-center">
+                          <svg className="w-full h-full" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            {/* Arduino board representation */}
+                            <rect x="3" y="6" width="18" height="12" rx="1" fill="currentColor" opacity="0.9"/>
+                            <circle cx="6" cy="9" r="0.8" fill="#1a1a1a"/>
+                            <circle cx="18" cy="9" r="0.8" fill="#1a1a1a"/>
+                            <circle cx="6" cy="15" r="0.8" fill="#1a1a1a"/>
+                            <circle cx="18" cy="15" r="0.8" fill="#1a1a1a"/>
+                            <rect x="8" y="10" width="8" height="1.5" rx="0.3" fill="#1a1a1a"/>
+                            <rect x="8" y="12.5" width="8" height="1.5" rx="0.3" fill="#1a1a1a"/>
+                            <line x1="10" y1="8" x2="10" y2="6" stroke="currentColor" strokeWidth="0.5" opacity="0.6"/>
+                            <line x1="12" y1="8" x2="12" y2="6" stroke="currentColor" strokeWidth="0.5" opacity="0.6"/>
+                            <line x1="14" y1="8" x2="14" y2="6" stroke="currentColor" strokeWidth="0.5" opacity="0.6"/>
+                          </svg>
+                        </div>
                         <div>
                           <h2 className="text-xl md:text-2xl font-display font-bold">{allCards[currentCardIndex]?.title}</h2>
                           <p className="text-sm font-semibold text-white/90">Step {currentCardIndex + 1} of {totalCards}</p>
