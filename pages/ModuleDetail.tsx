@@ -37,8 +37,8 @@ export const ModuleDetail: React.FC = () => {
 
   // Card swipe navigation state
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [touchStart, setTouchStart] = useState(0);
-  const [touchEnd, setTouchEnd] = useState(0);
+  const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{x: number, y: number} | null>(null);
 
   // Chatbot state
   const [messages, setMessages] = useState<Message[]>([
@@ -152,31 +152,46 @@ export const ModuleDetail: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [activeTab, currentCardIndex, totalCards]);
 
-  // Touch swipe handlers
+  // Touch swipe handlers with improved scroll vs swipe detection
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.targetTouches[0].clientX);
+    setTouchStart({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    });
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
+    setTouchEnd({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    });
   };
 
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
 
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
+    const deltaX = touchStart.x - touchEnd.x;
+    const deltaY = touchStart.y - touchEnd.y;
 
-    if (isLeftSwipe) {
-      goToNextCard();
-    }
-    if (isRightSwipe) {
-      goToPreviousCard();
+    // Only trigger swipe if horizontal movement is greater than vertical
+    // This prevents accidental swipes while scrolling
+    const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY);
+    const minSwipeDistance = 50;
+
+    if (isHorizontalSwipe && Math.abs(deltaX) > minSwipeDistance) {
+      const isLeftSwipe = deltaX > 0;
+      const isRightSwipe = deltaX < 0;
+
+      if (isLeftSwipe) {
+        goToNextCard();
+      }
+      if (isRightSwipe) {
+        goToPreviousCard();
+      }
     }
 
-    setTouchStart(0);
-    setTouchEnd(0);
+    setTouchStart(null);
+    setTouchEnd(null);
   };
 
   // Reset card index when switching to learn tab
@@ -691,10 +706,10 @@ export const ModuleDetail: React.FC = () => {
           </div>
         )}
 
-        {/* Novie Floating Button */}
+        {/* Novie Floating Button - Positioned top-left to avoid blocking navigation arrows */}
         <button
           onClick={() => setIsNovieChatOpen(true)}
-          className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-500 rounded-full shadow-2xl hover:shadow-purple-300 hover:scale-110 transition-all duration-300 flex items-center justify-center z-40"
+          className="fixed top-20 left-4 md:top-6 md:left-6 w-14 h-14 md:w-16 md:h-16 bg-gradient-to-r from-purple-600 to-pink-500 rounded-full shadow-2xl hover:shadow-purple-300 hover:scale-110 transition-all duration-300 flex items-center justify-center z-40"
           aria-label="Open Novie AI Assistant"
         >
           <Bot size={28} className="text-white" />
