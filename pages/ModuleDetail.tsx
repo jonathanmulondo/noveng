@@ -617,29 +617,43 @@ export const ModuleDetail: React.FC = () => {
                     />
                   </div>
 
-                  {/* Card Header */}
-                  <div className="bg-gradient-to-r from-purple-600 to-pink-500 px-6 py-4">
-                    <div className="flex items-center justify-between text-white">
-                      <div className="flex items-center gap-4">
-                        {/* Arduino Board Image */}
-                        <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-xl p-2 flex items-center justify-center">
-                          <svg className="w-full h-full" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            {/* Arduino board representation */}
-                            <rect x="3" y="6" width="18" height="12" rx="1" fill="currentColor" opacity="0.9"/>
-                            <circle cx="6" cy="9" r="0.8" fill="#1a1a1a"/>
-                            <circle cx="18" cy="9" r="0.8" fill="#1a1a1a"/>
-                            <circle cx="6" cy="15" r="0.8" fill="#1a1a1a"/>
-                            <circle cx="18" cy="15" r="0.8" fill="#1a1a1a"/>
-                            <rect x="8" y="10" width="8" height="1.5" rx="0.3" fill="#1a1a1a"/>
-                            <rect x="8" y="12.5" width="8" height="1.5" rx="0.3" fill="#1a1a1a"/>
-                            <line x1="10" y1="8" x2="10" y2="6" stroke="currentColor" strokeWidth="0.5" opacity="0.6"/>
-                            <line x1="12" y1="8" x2="12" y2="6" stroke="currentColor" strokeWidth="0.5" opacity="0.6"/>
-                            <line x1="14" y1="8" x2="14" y2="6" stroke="currentColor" strokeWidth="0.5" opacity="0.6"/>
-                          </svg>
-                        </div>
-                        <div>
-                          <h2 className="text-xl md:text-2xl font-display font-bold">{allCards[currentCardIndex]?.title}</h2>
-                          <p className="text-sm font-semibold text-white/90">Step {currentCardIndex + 1} of {totalCards}</p>
+                  {/* Card Header with Image */}
+                  <div className="relative">
+                    {/* Header Image */}
+                    {module?.thumbnail_url && (
+                      <div className="h-48 overflow-hidden bg-gradient-to-br from-purple-100 to-pink-100">
+                        <img
+                          src={module.thumbnail_url}
+                          alt={module.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // Fallback to gradient if image fails to load
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Card Title and Info */}
+                    <div className="bg-gradient-to-r from-purple-600 to-pink-500 px-6 py-4">
+                      <div className="flex items-center justify-between text-white">
+                        <div className="flex-1">
+                          <h2 className="text-xl md:text-2xl font-display font-bold mb-2">{allCards[currentCardIndex]?.title}</h2>
+                          <p className="text-sm font-semibold text-white/90 mb-2">Step {currentCardIndex + 1} of {totalCards}</p>
+
+                          {/* Tags */}
+                          {module?.module_tags && module.module_tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              {module.module_tags.map((tagObj, index) => (
+                                <span
+                                  key={index}
+                                  className="px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium text-white"
+                                >
+                                  #{tagObj.tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
