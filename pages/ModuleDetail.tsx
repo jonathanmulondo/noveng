@@ -706,15 +706,15 @@ export const ModuleDetail: React.FC = () => {
           </div>
         )}
 
-        {/* Novie Floating Button - Positioned top-left to avoid blocking navigation arrows */}
+        {/* Novie Floating Button - Positioned top-right to avoid blocking navigation arrows */}
         <button
           onClick={() => setIsNovieChatOpen(true)}
-          className="fixed top-20 left-4 md:top-6 md:left-6 w-14 h-14 md:w-16 md:h-16 bg-gradient-to-r from-purple-600 to-pink-500 rounded-full shadow-2xl hover:shadow-purple-300 hover:scale-110 transition-all duration-300 flex items-center justify-center z-40"
+          className="fixed top-20 right-4 md:top-6 md:right-6 w-12 h-12 md:w-14 md:h-14 bg-gradient-to-r from-purple-600 to-pink-500 rounded-full shadow-lg hover:shadow-purple-300 hover:scale-110 transition-all duration-300 flex items-center justify-center z-40"
           aria-label="Open Novie AI Assistant"
         >
-          <Bot size={28} className="text-white" />
-          <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-            <Sparkles size={12} className="text-white" />
+          <Bot size={20} className="text-white" />
+          <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+            <Sparkles size={10} className="text-white" />
           </div>
         </button>
       </div>
