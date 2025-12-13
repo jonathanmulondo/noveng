@@ -1,12 +1,11 @@
 **Level:** Beginner
 
-**Time Estimate:** 15 minutes
+**Time Estimate:** 5 minutes
 
-A breadboard is your best friend in electronics - it lets you build circuits without soldering! This module teaches you how breadboards work internally, how holes are connected, and why they're essential for prototyping. You'll learn the difference between terminal strips and power rails, and build your first multi-component circuit.
+A breadboard is your electronics canvas - a reusable board that lets you build circuits without soldering! This quick module teaches you the essential structure of breadboards: how holes are connected, what terminal strips and power rails do, and why there's a gap in the middle. No coding needed - just pure breadboard knowledge.
 
 **What You'll Learn:**
-- Understand how breadboard connections work
-- Identify terminal strips vs power rails
-- Build circuits without soldering
-- Connect multiple components safely
-- Practice good wiring techniques
+- How breadboard holes are connected internally
+- The difference between terminal strips and power rails
+- Why there's a gap in the middle
+- How to visualize connections
