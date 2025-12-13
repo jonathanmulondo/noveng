@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { ComponentType, SimComponent, Wire, Pin, CircuitState } from '../types';
 import { COMPONENT_SPECS } from '../constants';
-import { Trash2, Play, RefreshCw, ZapOff, Save, Download, Upload, X, RotateCw, Terminal, Code, Cpu, ChevronDown, ChevronUp, Copy, ZoomIn, ZoomOut, Maximize2, Undo, Redo, Search, Info } from 'lucide-react';
+import { Trash2, Play, RefreshCw, ZapOff, Save, Download, Upload, X, RotateCw, Terminal, Code, Cpu, ChevronDown, ChevronUp, Copy, ZoomIn, ZoomOut, Maximize2, Undo, Redo, Search, Info, Menu } from 'lucide-react';
 
 export const Simulator: React.FC = () => {
   const [components, setComponents] = useState<SimComponent[]>([]);
@@ -46,6 +46,7 @@ void loop() {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [searchQuery, setSearchQuery] = useState('');
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showMobilePalette, setShowMobilePalette] = useState(false);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -230,6 +231,9 @@ void loop() {
       y: 100 + offset,
       state: initialState
     }]);
+
+    // Close mobile palette after adding component
+    setShowMobilePalette(false);
   };
 
   const deleteComponent = (compId: string) => {
@@ -712,8 +716,37 @@ void loop() {
         ))}
       </div>
 
+      {/* Mobile backdrop overlay */}
+      {showMobilePalette && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setShowMobilePalette(false)}
+        />
+      )}
+
       {/* Component Palette - Futuristic Dark Theme */}
-      <div className="relative w-full md:w-72 bg-gradient-to-b from-neutral-900/95 via-purple-950/95 to-neutral-900/95 backdrop-blur-xl border-r border-purple-500/20 p-4 md:p-6 flex flex-col gap-4 md:gap-6 shadow-2xl z-10 pt-16 md:pt-6">
+      <div className={`
+        fixed md:relative
+        inset-y-0 left-0
+        w-80 md:w-72
+        bg-gradient-to-b from-neutral-900/95 via-purple-950/95 to-neutral-900/95
+        backdrop-blur-xl border-r border-purple-500/20
+        p-4 md:p-6
+        flex flex-col gap-4 md:gap-6
+        shadow-2xl
+        z-50 md:z-10
+        pt-16 md:pt-6
+        transition-transform duration-300 ease-in-out
+        ${showMobilePalette ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
+        {/* Mobile close button */}
+        <button
+          onClick={() => setShowMobilePalette(false)}
+          className="md:hidden absolute top-4 right-4 text-purple-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
+        >
+          <X size={24} />
+        </button>
+
         <div>
           <h2 className="font-display text-xl md:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-2">
             Components
@@ -826,6 +859,14 @@ void loop() {
         onWheel={handleWheel}
         onClick={() => setSelectedComp(null)}
       >
+        {/* Mobile menu button */}
+        <button
+          onClick={() => setShowMobilePalette(true)}
+          className="md:hidden fixed top-20 left-4 z-30 bg-gradient-to-r from-purple-600 to-pink-500 text-white p-3 rounded-full shadow-lg shadow-purple-500/50 hover:shadow-purple-500/80 transition-all"
+        >
+          <Menu size={24} />
+        </button>
+
         {/* Circuit grid pattern */}
         <div
           className="absolute inset-0 opacity-5 pointer-events-none"
