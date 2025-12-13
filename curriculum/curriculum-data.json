@@ -1,7 +1,7 @@
 {
   "curriculum": {
     "name": "NovEng Arduino Complete Curriculum",
-    "totalModules": 1,
+    "totalModules": 3,
     "levels": ["Beginner"],
     "modules": [
       {
@@ -17,6 +17,34 @@
         "studentCount": 15420,
         "prerequisites": [],
         "tags": ["setup", "basics", "IDE", "first-steps"]
+      },
+      {
+        "id": 2,
+        "title": "Using a Breadboard",
+        "slug": "using-a-breadboard",
+        "level": "Beginner",
+        "duration": "15 min",
+        "difficulty": "Beginner",
+        "category": "Arduino",
+        "thumbnail": "/thumbnails/breadboard.jpg",
+        "rating": 4.8,
+        "studentCount": 14100,
+        "prerequisites": ["Introduction to Arduino & IDE"],
+        "tags": ["breadboard", "prototyping", "circuits", "wiring"]
+      },
+      {
+        "id": 3,
+        "title": "Blinking an LED",
+        "slug": "blinking-an-led",
+        "level": "Beginner",
+        "duration": "20 min",
+        "difficulty": "Beginner",
+        "category": "Arduino",
+        "thumbnail": "/thumbnails/led-blink.jpg",
+        "rating": 4.9,
+        "studentCount": 13890,
+        "prerequisites": ["Using a Breadboard"],
+        "tags": ["LED", "digital-output", "digitalWrite", "blink"]
       }
     ]
   }

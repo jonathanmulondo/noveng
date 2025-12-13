@@ -65,6 +65,98 @@ export const QUIZZES: Record<string, ModuleQuiz> = {
         difficulty: 'medium'
       }
     ]
+  },
+
+  'using-a-breadboard': {
+    moduleSlug: 'using-a-breadboard',
+    moduleNumber: 2,
+    questions: [
+      {
+        id: 1,
+        question: 'How are holes connected in a breadboard terminal strip?',
+        options: [
+          'All holes in a row are connected together',
+          'Holes a-e are connected, holes f-j are connected, but not across the gap',
+          'Holes are connected vertically in columns',
+          'No holes are connected - you must use wires'
+        ],
+        correctAnswer: 1,
+        explanation: 'In terminal strips, holes a-b-c-d-e are connected horizontally, and f-g-h-i-j are connected horizontally, but the center gap separates them. This gap is designed for IC chips.',
+        difficulty: 'easy'
+      },
+      {
+        id: 2,
+        question: 'What is the purpose of power rails on a breadboard?',
+        options: [
+          'To make the breadboard look prettier',
+          'To provide vertical connections for power and ground',
+          'To separate different circuits',
+          'To hold the breadboard in place'
+        ],
+        correctAnswer: 1,
+        explanation: 'Power rails run vertically along the sides of a breadboard. All holes in a power rail are connected, making it easy to distribute power (+) and ground (-) to multiple components.',
+        difficulty: 'easy'
+      },
+      {
+        id: 3,
+        question: 'Why is there a gap in the middle of the breadboard?',
+        options: [
+          'To save plastic during manufacturing',
+          'To allow airflow for cooling',
+          'To accommodate IC chips without shorting their pins',
+          'To make the breadboard fold in half'
+        ],
+        correctAnswer: 2,
+        explanation: 'The center gap ensures that when you insert an IC chip (integrated circuit), the pins on opposite sides don\'t connect to each other. Each side of the chip can then connect to different components.',
+        difficulty: 'medium'
+      }
+    ]
+  },
+
+  'blinking-an-led': {
+    moduleSlug: 'blinking-an-led',
+    moduleNumber: 3,
+    questions: [
+      {
+        id: 1,
+        question: 'Why must you use a resistor with an LED?',
+        options: [
+          'To make the LED brighter',
+          'To limit current and prevent the LED from burning out',
+          'To change the LED color',
+          'Resistors are optional with LEDs'
+        ],
+        correctAnswer: 1,
+        explanation: 'LEDs can only handle about 20mA of current. Without a resistor, too much current would flow from the 5V Arduino pin, causing the LED to burn out instantly. The 220Ω resistor limits current to a safe level.',
+        difficulty: 'easy'
+      },
+      {
+        id: 2,
+        question: 'Which LED leg connects to positive voltage?',
+        options: [
+          'The shorter leg (cathode)',
+          'The longer leg (anode)',
+          'Either leg works the same way',
+          'It depends on the LED color'
+        ],
+        correctAnswer: 1,
+        explanation: 'The longer leg is the anode (+) and must connect to positive voltage. The shorter leg is the cathode (-) and connects to ground. LEDs are polarized and only work in one direction.',
+        difficulty: 'easy'
+      },
+      {
+        id: 3,
+        question: 'What does pinMode(13, OUTPUT) do?',
+        options: [
+          'Sets pin 13 to 5 volts',
+          'Configures pin 13 to send power out (not read input)',
+          'Turns pin 13 on and off repeatedly',
+          'Reads the voltage on pin 13'
+        ],
+        correctAnswer: 1,
+        explanation: 'pinMode() configures whether a pin will be used as an OUTPUT (sending power to control devices) or INPUT (reading sensors). You must call pinMode() in setup() before using digitalWrite().',
+        difficulty: 'medium'
+      }
+    ]
   }
 };
 
