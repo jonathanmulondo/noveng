@@ -10,6 +10,7 @@
     "seed": "node src/scripts/seedCurriculum.js",
     "db:setup": "node src/scripts/setupDatabase.js",
     "db:migrate": "node src/scripts/directMigration.js",
+    "db:cleanup": "node src/scripts/cleanupModules.js",
     "vercel-build": "echo 'No build needed for serverless'"
   },
   "keywords": [
