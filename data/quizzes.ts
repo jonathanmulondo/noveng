@@ -157,6 +157,52 @@ export const QUIZZES: Record<string, ModuleQuiz> = {
         difficulty: 'medium'
       }
     ]
+  },
+
+  'more-on-blinking-leds': {
+    moduleSlug: 'more-on-blinking-leds',
+    moduleNumber: 4,
+    questions: [
+      {
+        id: 1,
+        question: 'How do you access the third element in an array called leds[]?',
+        options: [
+          'leds[3]',
+          'leds[2]',
+          'leds(3)',
+          'third(leds)'
+        ],
+        correctAnswer: 1,
+        explanation: 'Arrays use zero-based indexing, meaning the first element is at index 0, second at index 1, and third at index 2. So leds[2] accesses the third element.',
+        difficulty: 'easy'
+      },
+      {
+        id: 2,
+        question: 'In a traffic light sequence, what should come after the green light?',
+        options: [
+          'Red light immediately',
+          'Yellow light as a warning',
+          'Green light stays on',
+          'All lights turn off'
+        ],
+        correctAnswer: 1,
+        explanation: 'In proper traffic light timing, yellow appears after green to warn drivers that the light is about to turn red. This gives drivers time to safely slow down or clear the intersection.',
+        difficulty: 'easy'
+      },
+      {
+        id: 3,
+        question: 'What does this for loop do: for(int i = 0; i < 5; i++)?',
+        options: [
+          'Runs 4 times (i = 0, 1, 2, 3)',
+          'Runs 5 times (i = 0, 1, 2, 3, 4)',
+          'Runs 6 times (i = 0, 1, 2, 3, 4, 5)',
+          'Runs forever'
+        ],
+        correctAnswer: 1,
+        explanation: 'The loop starts at 0 and continues while i < 5, incrementing i each time. So it runs when i equals 0, 1, 2, 3, and 4 - that\'s 5 times total. When i reaches 5, the condition i < 5 becomes false and the loop stops.',
+        difficulty: 'medium'
+      }
+    ]
   }
 };
 

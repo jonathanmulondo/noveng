@@ -1,8 +1,8 @@
 {
   "curriculum": {
     "name": "NovEng Arduino Complete Curriculum",
-    "totalModules": 3,
-    "levels": ["Beginner"],
+    "totalModules": 4,
+    "levels": ["Beginner", "Intermediate"],
     "modules": [
       {
         "id": 1,
@@ -45,6 +45,20 @@
         "studentCount": 13890,
         "prerequisites": ["Using a Breadboard"],
         "tags": ["LED", "digital-output", "digitalWrite", "blink"]
+      },
+      {
+        "id": 4,
+        "title": "More on Blinking LEDs",
+        "slug": "more-on-blinking-leds",
+        "level": "Intermediate",
+        "duration": "25 min",
+        "difficulty": "Intermediate",
+        "category": "Arduino",
+        "thumbnail": "/thumbnails/led-patterns.jpg",
+        "rating": 4.7,
+        "studentCount": 12450,
+        "prerequisites": ["Blinking an LED"],
+        "tags": ["LED", "arrays", "patterns", "traffic-light", "sequences"]
       }
     ]
   }
