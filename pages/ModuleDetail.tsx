@@ -39,6 +39,7 @@ export const ModuleDetail: React.FC = () => {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null);
   const [touchEnd, setTouchEnd] = useState<{x: number, y: number} | null>(null);
+  const [isSwipeOnCode, setIsSwipeOnCode] = useState(false);
 
   // Chatbot state
   const [messages, setMessages] = useState<Message[]>([
@@ -154,6 +155,11 @@ export const ModuleDetail: React.FC = () => {
 
   // Touch swipe handlers with improved scroll vs swipe detection
   const handleTouchStart = (e: React.TouchEvent) => {
+    // Check if touch started on a code block or pre element
+    const target = e.target as HTMLElement;
+    const isOnCode = target.closest('pre, code, .code-block');
+    setIsSwipeOnCode(!!isOnCode);
+
     setTouchStart({
       x: e.targetTouches[0].clientX,
       y: e.targetTouches[0].clientY
@@ -169,6 +175,14 @@ export const ModuleDetail: React.FC = () => {
 
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
+
+    // Don't trigger card swipe if the touch was on a code block
+    if (isSwipeOnCode) {
+      setTouchStart(null);
+      setTouchEnd(null);
+      setIsSwipeOnCode(false);
+      return;
+    }
 
     const deltaX = touchStart.x - touchEnd.x;
     const deltaY = touchStart.y - touchEnd.y;
@@ -192,6 +206,7 @@ export const ModuleDetail: React.FC = () => {
 
     setTouchStart(null);
     setTouchEnd(null);
+    setIsSwipeOnCode(false);
   };
 
   // Reset card index when switching to learn tab
